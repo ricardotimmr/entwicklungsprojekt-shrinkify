@@ -12,12 +12,15 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
   - Bilder: JPEG, PNG
   - Videos: MP4, MOV
   - Audiodateien: MP3, WAV
-- **Einfacher Dateiupload für Kunden**: Kunden können Dateien über einen personalisierten Link hochladen, ohne zusätzliche Einstellungen vornehmen zu müssen.
-- **Personalisierte Links**: Admins können personalisierte Links generieren, die auf den spezifischen Anforderungen des Kunden basieren (z.B. maximale Dateigröße, Dateianzahl).
-- **Guthaben-System**: Admins können ein Guthaben-System einrichten, das die Anzahl oder Größe der Dateien pro Kunde begrenzt.
-- **Zeitraum-Begrenzung für Links**: Links sind nur für einen definierten Zeitraum gültig oder an spezifische Kunden gebunden.
-- **Optimierungsvorgaben**: Admins können Vorgaben für die Optimierung festlegen (z.B. Komprimierung, Auflösung).
-- **Direkter Download**: Nach der Optimierung können die Dateien direkt heruntergeladen werden.
+- **Einfacher Upload**: Kunden laden Dateien über personalisierte Links hoch, ohne manuelle Anpassungen.
+- **Guthaben- und Limit-System**: Admins können Upload-Limits und Guthaben für Kunden festlegen.
+- **Zeitraum-Begrenzung**: Links sind nur für einen definierten Zeitraum gültig.
+- **Direkter Download**: Optimierte Dateien stehen sofort nach der Verarbeitung zum Download bereit.
+- **Admin-Dashboard**: Übersichtliche Verwaltung von Optimierungsparametern, Links und Kunden-Guthaben.
+- **Responsives Design**: Für Desktop und mobile Geräte optimiert.
+- **Fehlermeldungen & Upload-Abbruch**: Verständliche Fehlerhinweise und die Möglichkeit, den Upload abzubrechen.
+- **Fortschrittsanzeige**: Visualisierung des Upload- und Optimierungsfortschritts.
+- **Benachrichtigungen**: Optionale Benachrichtigungen über erfolgreiche Uploads oder erschöpftes Guthaben.
 
 ## Technologie-Stack (folgt)
 
