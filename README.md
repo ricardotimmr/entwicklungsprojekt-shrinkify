@@ -9,8 +9,8 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 ## Funktionen
 
 - **Automatische Optimierung von Dateien**: Unterstützung für eine breite Palette von Formaten, einschließlich:
-  - Bilder: JPEG, PNG, GIF
-  - Videos: MP4, AVI
+  - Bilder: JPEG, PNG
+  - Videos: MP4, MOV
   - Audiodateien: MP3, WAV
 - **Einfacher Dateiupload für Kunden**: Kunden können Dateien über einen personalisierten Link hochladen, ohne zusätzliche Einstellungen vornehmen zu müssen.
 - **Personalisierte Links**: Admins können personalisierte Links generieren, die auf den spezifischen Anforderungen des Kunden basieren (z.B. maximale Dateigröße, Dateianzahl).
@@ -38,3 +38,8 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 ## Weitere Informationen
 
 Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen effizient verarbeiten. Die Studierenden haben die Freiheit, zusätzliche Features oder alternative Ansätze zur Optimierung und Bereitstellung der Dateien zu entwickeln.
+
+## Miro-Board
+
+Weitere Details und die visuelle Darstellung des Projekts findest du auf dem Miro-Board:  
+[Miro-Board - Web-Anwendung zur Dateikomprimierung](https://miro.com/app/board/uXjVLQGRIBo=/)
