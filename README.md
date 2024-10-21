@@ -42,6 +42,12 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 
 Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen effizient verarbeiten. Die Studierenden haben die Freiheit, zusätzliche Features oder alternative Ansätze zur Optimierung und Bereitstellung der Dateien zu entwickeln.
 
+## Contributors
+
+Mia Charlotte Henrichsmeyer
+Cosima Hiromi Zink
+Ricardo Timm
+
 ## Miro-Board
 
 Weitere Details und die visuelle Darstellung des Projekts findest du auf dem Miro-Board:  
