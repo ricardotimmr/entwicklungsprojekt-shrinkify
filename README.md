@@ -42,6 +42,11 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 
 Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen effizient verarbeiten. Die Studierenden haben die Freiheit, zusätzliche Features oder alternative Ansätze zur Optimierung und Bereitstellung der Dateien zu entwickeln.
 
+### Dokumentation & Ressourcen
+
+- **Wiki**: Detaillierte technische Dokumentation und Anleitungen zur Nutzung der Anwendung findest du im Projekt-Wiki.  
+  [Entwicklungsprojekt-Wiki - Shrinkify](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki)
+
 ## Contributors
 
 - **Mia Charlotte Henrichsmeyer**
