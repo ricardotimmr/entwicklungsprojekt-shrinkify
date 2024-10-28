@@ -31,9 +31,9 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 
 ## Verwendung
 
-1. **Für Kunden**: Besuche den personalisierten Link, der dir zur Verfügung gestellt wurde, und lade deine Dateien hoch. Die Anwendung optimiert die Dateien automatisch, und du kannst sie anschließend herunterladen.
+1. **Für Unternehmen/Einzelpersonen**: Besuche den personalisierten Link, der dir zur Verfügung gestellt wurde, und lade deine Dateien hoch. Die Anwendung optimiert die Dateien automatisch, und du kannst sie anschließend herunterladen.
    
-2. **Für Admins**:
+2. **Für Conten-Manager**:
    - Melde dich im Admin-Dashboard an.
    - Lege die Vorgaben für die Optimierung fest (z.B. Komprimierungsrate, maximale Auflösung).
    - Erstelle personalisierte Links für Kunden und verwalte deren Dateiupload-Guthaben.
