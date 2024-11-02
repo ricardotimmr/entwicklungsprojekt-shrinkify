@@ -46,6 +46,8 @@ Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen 
 
 - **Wiki**: Detaillierte technische Dokumentation und Anleitungen zur Nutzung der Anwendung findest du im Projekt-Wiki.  
   [Entwicklungsprojekt-Wiki - Shrinkify](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki)
+- **Exposé**: [Exposé ‐ Web‐Anwendung zur automatischen Dateikomprimierung für CMS](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki/Exposé-%E2%80%90-Web%E2%80%90Anwendung-zur-automatischen-Dateikomprimierung-für-CMS)
+- **Weekly Documentation**: [Wöchentliche Dokumentation der Arbeit an Shrinkify](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki/Weekly-Documentation)
 
 ## Contributors
 
