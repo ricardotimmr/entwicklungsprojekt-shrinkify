@@ -90,8 +90,8 @@
 - Pro Version für einige Features nötig
 
 ### Kraken.io
-<img width="300" alt="tinypng-1" src="https://github.com/user-attachments/assets/3e14fe6a-44cb-483e-8b32-73274c641245">
-<img height="300" alt="tinypng-2" src="[https://github.com/user-attachments/assets/3e14fe6a-44cb-483e-8b32-73274c641245](https://github.com/user-attachments/assets/4513bb11-2c12-473d-8ac0-f4be6a1eabed)">
+<img src="images/kraken-io-1.png" alt="Kraken.io 3" height="300">
+<img src="images/kraken-io-2.png" alt="Kraken.io 3" height="300">
 <img src="images/kraken-io-3.png" alt="Kraken.io 3" height="300">
 <img src="images/kraken-io-4.png" alt="Kraken.io 4" width="300">
 
