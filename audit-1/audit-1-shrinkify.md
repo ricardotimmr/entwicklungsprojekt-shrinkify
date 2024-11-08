@@ -1,12 +1,12 @@
 # Shrinkify Audit 1
-- Möglichkeit für Kunden große Bilder, Videos und Audiodateien vor dem Hochladen in ein Content-Management-System (CMS) automatisch zu optimieren
+- Möglichkeit für Kunden, große Bilder, Videos und Audiodateien vor dem Hochladen in ein Content-Management-System (CMS) automatisch zu optimieren
 - um Speicherprobleme und Performance-Einbußen zu verhindern
 
 ## Concept Map
-![Concept Map](concept-map.jpg)
+![Concept Map](images/concept-map.jpg)
 
 ## User Flows
-![User Flows](user-flow.jpg)
+![User Flows](images/user-flow.jpg)
 
 ## Proof of Concepts
 | **Priorität** | **Herausforderung**                      | **Beschreibung**                                                                                                               | **Unterherausforderungen**                                                                                                   |
@@ -17,7 +17,8 @@
 | 4             | Skalierbarkeit und Performance  | Gewährleisten, dass das System bei gleichzeitiger Nutzung mehrerer Asset-Owner stabil bleibt.                                 | - Unterstützung von mehreren gleichzeitigen Uploads <br> - Optimierung der Systemarchitektur für Lastverteilung <br> - Implementierung von Lastspitzen-Management |
 
 ## Personas
-![Jonas Weber](jonas-weber.png)
+<img src="images/jonas-weber.png" alt="Jonas Weber" width="200">
+
 ### Jonas Weber
 - Alter: 38 Jahre
 - Geschlecht: Männlich
@@ -29,7 +30,8 @@
 - Family: Verheiratet, 2 Kinder (7 und 10 Jahre)
 - Interessen: Rennrad fahren, Gartenarbeit an freien Wochenenden
 
-![Lara Fischer](lara-fischer.png)
+<img src="images/lara-fischer.png" alt="Lara Fischer" width="200">
+
 ### Lara Fischer
 - Alter: 27 Jahre
 - Geschlecht: Weiblich
@@ -41,7 +43,8 @@
 - Family: Ledig, lebt mit Partner zusammen
 - Interessen: True Crime Podcasts, liest gerne Fantasy Romane
 
-![Max Müller](max-mueller.png)
+<img src="images/max-mueller.png" alt="Max Müller" width="200">
+
 ### Max Müller
 - Alter: 30 Jahre
 - Geschlecht: Männlich
@@ -53,13 +56,13 @@
 - Family: Verheiratet, keine Kinder
 - Interessen: Fotografie, Elektro Musik
 
-
 ## Marktrecherche
 ### Cloudinary
-![Coudinary](cloudinary-1.png)
-![Coudinary](cloudinary-2.png)
-![Coudinary](cloudinary-3.png)
-![Coudinary](cloudinary-4.png)
+<img src="images/cloudinary-1.png" alt="Cloudinary 1" width="300">
+<img src="images/cloudinary-2.png" alt="Cloudinary 2" height="300">
+<img src="images/cloudinary-3.png" alt="Cloudinary 3" height="300">
+<img src="images/cloudinary-4.png" alt="Cloudinary 4" width="300">
+
 **Pro:**
 - viele Optionen Assets einzufügen (image search google, web adress, dropbox)
 - Media Library
@@ -71,9 +74,10 @@
 - Anmeldung
 
 ### TinyPNG
-![TinyPNG](TinyPNG-1.png)
-![TinyPNG](TinyPNG-2.png)
-![TinyPNG](TinyPNG-3.png)
+<img src="images/tinypng-1.png" alt="TinyPNG 1" width="300">
+<img src="images/tinypng-2.png" alt="TinyPNG 2" height="300">
+<img src="images/tinypng-3.png" alt="TinyPNG 3" width="300">
+
 **Pro:**
 - mehrere Uploadmöglichkeiten (dropbox etc.)
 - Bildbearbeitung
@@ -86,10 +90,11 @@
 - Pro Version für einige Features nötig
 
 ### Kraken.io
-![Kraken.io](Kraken-io-1.png)
-![Kraken.io](Kraken-io-2.png)
-![Kraken.io](Kraken-io-3.png)
-![Kraken.io](Kraken-io-4.png)
+<img src="images/kraken-io-1.png" alt="Kraken.io 1" width="300">
+<img src="images/kraken-io-2.png" alt="Kraken.io 2" height="300">
+<img src="images/kraken-io-3.png" alt="Kraken.io 3" height="300">
+<img src="images/kraken-io-4.png" alt="Kraken.io 4" width="300">
+
 **Pro:**
 - Verschiedene Upload Möglichkeiten (Dropbox, ZIP etc.)
 - Resizing 
