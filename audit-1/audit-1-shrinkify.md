@@ -96,7 +96,7 @@
 <img src="images/kraken-io-4.png" alt="Kraken.io 4" width="300">
 
 **Pro:**
-- Verschiedene Upload Möglichkeiten (Dropbox, ZIP etc.)
+- Verschiedene Upload Möglichkeiten (Dropbox, ZIP etc...)
 - Resizing 
 - keine Anmeldung möglich
 
