@@ -48,6 +48,7 @@ Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen 
   [Entwicklungsprojekt-Wiki - Shrinkify](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki)
 - **Exposé**: [Exposé ‐ Web‐Anwendung zur automatischen Dateikomprimierung für CMS](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki/Exposé-%E2%80%90-Web%E2%80%90Anwendung-zur-automatischen-Dateikomprimierung-für-CMS)
 - **Weekly Documentation**: [Wöchentliche Dokumentation der Arbeit an Shrinkify](https://github.com/ricardotimmr/entwicklungsprojekt-shrinkify/wiki/Weekly-Documentation)
+- **Kanban Board:**: [Kanban Board mit Issues für das Entwicklungsprojekt Shrinkify](https://github.com/users/ricardotimmr/projects/2)
 
 ## Contributors
 
