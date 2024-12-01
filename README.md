@@ -52,9 +52,9 @@ Dieses Projekt soll mehrere Kunden gleichzeitig bedienen und große Datenmengen 
 
 ## Contributors
 
-- **Mia Charlotte Henrichsmeyer**
-- **Cosima Hiromi Zink**
-- **Ricardo Timm**
+- [Mia Charlotte Henrichsmeyer](https://github.com/miahenri)
+- [Cosima Hiromi Zink](https://github.com/cosimazink)
+- [Ricardo Timm](https://github.com/ricardotimmr)
 
 ## Miro-Board
 
