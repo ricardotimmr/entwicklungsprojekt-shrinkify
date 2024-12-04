@@ -1,0 +1,122 @@
+/* Styling für den Body */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #ffffff;
+}
+
+/* Zentriert das Formular und verleiht ihm ein modernes Aussehen */
+form {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Datei-Input */
+input[type="file"] {
+    display: block;
+    margin: 10px auto 20px;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* Upload-Button */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #ffffff;
+    background: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Fortschrittsanzeige */
+#uploadStatus {
+    width: 80%;
+    max-width: 600px;
+}
+
+.file-progress {
+    margin-bottom: 10px;
+}
+
+.file-name {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #007BFF;
+    border-radius: 5px;
+    width: 0;
+    transition: width 0.2s ease;
+}
+
+.progress-container {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    height: 10px;
+    overflow: hidden;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+/* Toast Nachricht */
+.toast {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease, fadeOut 0.5s ease 1.5s forwards;
+}
+
+/* Fehlermeldungen */
+.toast.error {
+    background-color: #ff4c4c;
+}
+
+/* Animationen */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
