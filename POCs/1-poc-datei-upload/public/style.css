@@ -1,0 +1,45 @@
+/* Styling für den Body */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #ffffff;
+}
+
+/* Zentriert das Formular und verleiht ihm ein modernes Aussehen */
+form {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+/* Datei-Input */
+input[type="file"] {
+    display: block;
+    margin: 10px auto 20px;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* Upload-Button */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #ffffff;
+    background: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #0056b3;
+}
