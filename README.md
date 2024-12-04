@@ -24,8 +24,8 @@ Dieses Projekt ist Teil des Entwicklungsprojekts von **Christian Noss** und hat 
 
 ## Technologie-Stack (folgt)
 
-- **Frontend**: -
-- **Backend**: -
+- **Frontend**: Vue.js in Kombination mit TailwindCSS
+- **Backend**: Node.js in Kombination mit Express.js
 - **Datenbank**: -
 - **Dateiverarbeitung**: -
 
