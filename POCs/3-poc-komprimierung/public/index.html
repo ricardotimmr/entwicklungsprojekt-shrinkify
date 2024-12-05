@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scaled=1.0" />
+        <title>1-poc-datei-upload</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <form>
+            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" multiple />
+            <select id="format">
+                <option value="jpeg">JPEG</option>
+                <option value="png">PNG</option>
+            </select>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="results"></div>
+        <script src="script.js"></script>
+    </body>
+</html>
