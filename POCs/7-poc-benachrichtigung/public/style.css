@@ -1,0 +1,125 @@
+/* Styling für den Body */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #ffffff;
+}
+
+/* Zentriert das Formular und verleiht ihm ein modernes Aussehen */
+form {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+/* Datei-Input */
+input[type="file"] {
+    display: block;
+    margin: 10px auto 20px;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* Upload-Button */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #ffffff;
+    background: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+#email-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Das E-Mail-Icon */
+#email-icon {
+    width: 30px;
+    height: 3%;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+#email-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Verstecktes Eingabefeld */
+#email-hover {
+    position: absolute;
+    top: 40px; /* Abstand vom Icon */
+    right: 0; /* Ausrichtung nach rechts */
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Label */
+#email-hover label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+/* Input-Feld */
+#email-hover input[type="email"] {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+/* Button */
+#email-hover button {
+    padding: 10px 20px;
+    background: #ff6f61;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#email-hover button:hover {
+    background: #e55b4c;
+}
+
+/* Verstecken des Formulars */
+.hidden {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
