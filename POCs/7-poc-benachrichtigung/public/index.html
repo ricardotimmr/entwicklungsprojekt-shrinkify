@@ -2,30 +2,19 @@
 <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scaled=1.0" />
         <title>1-poc-datei-upload</title>
         <link rel="stylesheet" href="style.css">
     </head>
 
     <body>
-        <!-- Form für Datei-Upload -->
-        <form id="upload-form">
+        <form>
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" multiple />
             <button type="submit">Upload</button>
         </form>
-
-        <!-- E-Mail-Bereich -->
-        <div id="email-container">
-            <img src="icons/email-icon.png" alt="E-Mail Icon" id="email-icon" />
-            <div id="email-hover" class="hidden">
-                <form id="email-form">
-                    <label for="email">E-Mail:</label>
-                    <input type="email" id="email" name="email" placeholder="Ihre E-Mail-Adresse" required />
-                    <button type="submit">Senden</button>
-                </form>                    
-            </div>
-        </div>
-
+        <form id="emailForm">
+            <input type="email" id="emailInput" name="email" placeholder="shrinkify.ep@gmail.com" required />
+            <button type="submit">E-Mail senden</button>
+        </form>
         <script src="script.js"></script>
-    </body>    
-</html>
+    </body>
