@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://apis.google.com https://accounts.google.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>1-poc-datei-upload</title>
     <link rel="stylesheet" href="style.css">
@@ -11,24 +12,18 @@
         <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" multiple />
         <button type="submit">Upload</button>
     </form>
-    <ul id="fileList"></ul> <!-- Liste für ausgewählte Dateien -->
+    <ul id="fileList"></ul>
     <div id="uploadStatus"></div>
-
-    <!-- Toast Container -->
     <div id="toastContainer"></div>
 
+    <!-- Button to trigger Google Drive picker -->
     <div id="fileSources">
-        <button id="selectFromGoogleDrive">Von Google Drive</button>
-        <button id="selectFromDropbox">Von Dropbox</button>
+        <button id="selectFromGoogleDrive">Google Drive</button>
     </div>    
 
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
-
-    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
-
     <script src="script.js"></script>
-    <script src="dropbox.js"></script>
     <script src="googledrive.js"></script>
 </body>
-
 </html>

@@ -1,145 +1,119 @@
-const googleClientId = "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com"; // Deine Google Client-ID
-const googleScopes = "https://www.googleapis.com/auth/drive.readonly";
+const CLIENT_ID = "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com"; // Replace with your Google Client ID
+const API_KEY = "AIzaSyCKvK30z0OWcsJdHG41QT8qE3oWVmIgtH8"; // Replace with your Google API Key
+const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
+let pickerApiLoaded = false;
+let oauthToken;
+let tokenClient;
 
-let gapiInitialized = false; // Um sicherzustellen, dass gapi nur einmal initialisiert wird
+gapi.load("picker", () => {
+    console.log("Google Picker API loaded.");
+    pickerApiLoaded = true;
+});
 
-// Google API-Client initialisieren
-function initializeGoogleAPI() {
-    if (gapiInitialized) {
-        console.log("gapi bereits initialisiert.");
-        return;
-    }
-    
-    console.log("Lade Google API...");
-    gapi.load('client:auth2', initClient);
-    gapiInitialized = true;
-}
-
-// Google API-Client initialisieren
-function initClient() {
-    console.log("Google API Client wird initialisiert...");
-    gapi.auth2.init({
-        client_id: googleClientId,
-    }).then(() => {
-        console.log("Google API Client initialisiert.");
-        document.getElementById("selectFromGoogleDrive").addEventListener("click", openPicker);
-    }).catch(error => {
-        console.error("Fehler bei der Initialisierung des Google API Clients:", error);
+window.onload = () => {
+    console.log("Initializing Token Client...");
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (tokenResponse) => {
+            console.log("Token received:", tokenResponse);
+            oauthToken = tokenResponse.access_token;
+            createPicker(); // Proceed to Google Picker once authenticated
+        },
     });
-}
+};
 
-// Picker öffnen
-function openPicker() {
-    console.log("Versuche, den Google Picker zu öffnen...");
-    
-    const authInstance = gapi.auth2.getAuthInstance();
-    const token = authInstance.currentUser.get().getAuthResponse().access_token;
-    
-    if (!token) {
-        console.error("Kein Token vorhanden. Bitte melden Sie sich an.");
-        showToast("Bitte melden Sie sich an, um auf Google Drive zuzugreifen.", "error");
-        return;
+document.getElementById("selectFromGoogleDrive").addEventListener("click", () => {
+    console.log("Select button clicked. Requesting access token...");
+    tokenClient.requestAccessToken();
+});
+
+// Create the Google Picker
+function createPicker() {
+    if (pickerApiLoaded && oauthToken) {
+        console.log("Creating Google Picker...");
+        const picker = new google.picker.PickerBuilder()
+            .addView(google.picker.ViewId.DOCS)
+            .setOAuthToken(oauthToken)
+            .setDeveloperKey(API_KEY)
+            .setCallback(pickerCallback)
+            .build();
+        picker.setVisible(true);
+    } else {
+        console.error("Google Picker is not ready yet.");
+        showToast("Google Picker is not ready yet.", "error");
     }
-
-    console.log("Token gefunden. Öffne den Picker...");
-    const picker = new google.picker.PickerBuilder()
-        .addView(new google.picker.View(google.picker.ViewId.DOCS))
-        .setOAuthToken(token)
-        .setDeveloperKey("DEIN_GOOGLE_API_KEY") // Dein Google API Key hier
-        .setCallback(pickerCallback)
-        .build();
-    picker.setVisible(true);
 }
 
-// Callback, wenn eine Datei ausgewählt wurde
+// Handle file selection
 function pickerCallback(data) {
-    console.log("Picker Callback aufgerufen...");
-    
+    console.log("Picker callback data:", data);
     if (data.action === google.picker.Action.PICKED) {
         const fileId = data.docs[0].id;
-        console.log(`Datei ausgewählt: ${fileId}`);
-        downloadFile(fileId);
-    } else {
-        console.log("Keine Datei ausgewählt.");
+        const fileName = data.docs[0].name;
+        console.log(`File selected: ID=${fileId}, Name=${fileName}`);
+        showToast(`Selected file: ${fileName}`);
+        downloadFile(fileId, fileName);
+    } else if (data.action === google.picker.Action.CANCEL) {
+        console.log("File selection canceled.");
+        showToast("File selection canceled.");
     }
 }
 
-// Datei von Google Drive herunterladen
-function downloadFile(fileId) {
-    console.log(`Lade Datei mit ID ${fileId} herunter...`);
-    
-    const authInstance = gapi.auth2.getAuthInstance();
-    const token = authInstance.currentUser.get().getAuthResponse().access_token;
+// Download file from Google Drive
+async function downloadFile(fileId, fileName) {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const headers = new Headers({ Authorization: `Bearer ${oauthToken}` });
 
-    if (!token) {
-        console.error("Kein Token vorhanden. Bitte anmelden.");
-        showToast("Kein Token gefunden. Bitte anmelden.", "error");
-        return;
+    console.log(`Downloading file: ${fileName} from URL: ${url}`);
+    try {
+        const response = await fetch(url, { headers });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        console.log("File downloaded successfully.");
+
+        const blob = await response.blob();
+
+        // Upload the file to your backend
+        const formData = new FormData();
+        formData.append("file", new File([blob], fileName));
+        console.log("Uploading file to the server...");
+        await uploadFileToServer(formData, fileName);
+    } catch (error) {
+        console.error("Error downloading file:", error);
+        showToast("Error downloading file.", "error");
     }
+}
 
-    fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Fehler beim Herunterladen der Datei.");
-            }
-            return response.blob();
-        })
-        .then((blob) => {
-            console.log("Datei erfolgreich heruntergeladen.");
-            showToast("Datei erfolgreich heruntergeladen.");
-            uploadFile(blob, "google-drive-file"); // Zeigt ein Beispiel, wie man die Datei weiterverarbeitet
-        })
-        .catch((error) => {
-            console.error("Fehler beim Herunterladen der Datei:", error);
-            showToast("Fehler beim Herunterladen der Datei.", "error");
+// Upload the file to your backend
+async function uploadFileToServer(formData, fileName) {
+    try {
+        const response = await fetch("http://localhost:3000/upload", {
+            method: "POST",
+            body: formData,
         });
-}
 
-// Datei an den Server hochladen
-function uploadFile(file, fileName) {
-    console.log(`Hochladen der Datei: ${fileName}`);
-    
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://localhost:3000/upload");
-
-    xhr.onload = () => {
-        if (xhr.status === 200) {
-            console.log(`Upload erfolgreich: ${fileName}`);
-            showToast(`Upload erfolgreich: ${fileName}`);
+        if (response.ok) {
+            console.log(`File uploaded successfully: ${fileName}`);
+            showToast(`Upload successful: ${fileName}`);
         } else {
-            console.error(`Fehler beim Upload der Datei: ${fileName}`);
-            showToast(`Fehler beim Upload der Datei: ${fileName}`, "error");
+            console.error(`Error uploading ${fileName}:`, response.statusText);
+            showToast(`Error uploading ${fileName}`, "error");
         }
-    };
-
-    xhr.onerror = () => {
-        console.error(`Fehler beim Upload der Datei: ${fileName}`);
-        showToast(`Fehler beim Upload der Datei: ${fileName}`, "error");
-    };
-
-    const formData = new FormData();
-    formData.append("file", file, fileName);
-    xhr.send(formData);
+    } catch (error) {
+        console.error(`Error uploading ${fileName}:`, error);
+        showToast(`Error uploading ${fileName}`, "error");
+    }
 }
 
-// Funktion für Toast-Benachrichtigungen
+// Show toast notifications
 function showToast(message, type = "success") {
+    console.log(`Toast message: ${message}, Type: ${type}`);
     const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
+    toast.className = `toast toast-${type}`;
+    toast.innerText = message;
+    document.body.appendChild(toast);
 
-    const toastContainer = document.getElementById("toastContainer");
-    toastContainer.appendChild(toast);
-
-    // Toast automatisch entfernen
     setTimeout(() => {
         toast.remove();
-    }, 2000); // 2 Sekunden
+    }, 3000);
 }
-
-// Initialisierung der Google API
-initializeGoogleAPI();
