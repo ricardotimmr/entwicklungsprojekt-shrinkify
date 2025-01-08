@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
+const jwt = require("jsonwebtoken"); // JWT-Bibliothek
 
 const app = express();
 const port = 3000;
@@ -76,6 +77,30 @@ app.post("/upload", upload.array("file", 10), (req, res) => {
     });
 });
 
+// Route für die Token-Generierung
+app.post("/generate-token", (req, res) => {
+    const { name, expiryDate, url } = req.body;
+
+    if (!name || !expiryDate || !url) {
+        return res.status(400).json({ message: "Name, Ablaufdatum und URL sind erforderlich." });
+    }
+
+    try {
+        // Token generieren
+        const payload = {
+            name: name,
+            url: url, // Ziel-URL
+            exp: Math.floor(new Date(expiryDate).getTime() / 1000), // Ablaufdatum in Sekunden
+        };
+        const token = jwt.sign(payload, SECRET_KEY);
+
+        res.status(200).json({ token });
+    } catch (err) {
+        console.error("Fehler beim Generieren des Tokens:", err.message);
+        res.status(500).json({ message: "Fehler beim Generieren des Tokens" });
+    }
+});
+
 // Route: Link erstellen
 app.post("/create-link", (req, res) => {
     const { name, expiryDate, url } = req.body;
@@ -128,6 +153,36 @@ app.delete("/delete-links", (req, res) => {
         }
     });
 });
+
+// Geheime Schlüssel für die Token-Generierung und -Verifizierung
+const SECRET_KEY = "secret-key";
+
+// Route zur Validierung und Weiterleitung
+app.get("/access-link", (req, res) => {
+    const { token } = req.query;
+
+    if (!token) {
+        return res.status(400).send("Token fehlt.");
+    }
+
+    try {
+        // Token verifizieren und dekodieren
+        const decoded = jwt.verify(token, SECRET_KEY);
+
+        // Ablaufdatum prüfen
+        const currentDate = Math.floor(Date.now() / 1000); // Aktuelles Datum in Sekunden
+        if (decoded.exp < currentDate) {
+            return res.status(403).send("Link ist abgelaufen.");
+        }
+
+        // Wenn gültig, zur Zielseite weiterleiten
+        res.redirect(decoded.url); // Ziel-URL aus dem Token
+    } catch (err) {
+        console.error("Fehler beim Verifizieren des Tokens:", err.message);
+        res.status(400).send("Ungültiger Token.");
+    }
+});
+
 
 // Fehlerbehandlung für Multer
 app.use((err, req, res, next) => {

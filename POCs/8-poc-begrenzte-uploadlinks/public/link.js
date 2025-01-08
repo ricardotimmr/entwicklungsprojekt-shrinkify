@@ -1,15 +1,3 @@
-// Hilfsfunktion zum Erstellen eines verschlüsselten JWT
-function generateToken(name, expiryDate) {
-    // Beispiel für JWT-Generierung mit einem simplen Ansatz (nur für Demo-Zwecke)
-    const payload = {
-        name: name,
-        exp: Math.floor(new Date(expiryDate).getTime() / 1000), // Unix Timestamp
-    };
-    const base64Payload = btoa(JSON.stringify(payload)); // Encodiert in Base64
-    const signature = btoa("secret-key"); // Simulierte Signatur (geheime Schlüssel)
-    return `${base64Payload}.${signature}`;
-}
-
 // Links von der Datenbank abrufen
 function fetchLinks() {
     fetch("http://localhost:3000/links")
@@ -43,39 +31,48 @@ document.getElementById("link-form").addEventListener("submit", function (event)
         return;
     }
 
-    // Token generieren
-    const token = generateToken(name, expiryDate);
+    // Ziel-URL für die Weiterleitung (z. B. eine statische Seite)
+    const targetUrl = "http://localhost:3000/index.html";
 
-    // Ablaufdatum überprüfen
-    const currentDate = new Date();
-    const expiry = new Date(expiryDate);
-    let url;
-    if (currentDate > expiry) {
-        // Link auf error.html verweisen, wenn abgelaufen
-        url = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/error.html`;
-    } else {
-        // Link erstellen
-        url = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/index.html?token=${token}`;
-    }
-
-    fetch("http://localhost:3000/create-link", {
+    // Token vom Server generieren lassen
+    fetch("http://localhost:3000/generate-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, expiryDate, url }),
+        body: JSON.stringify({ name, expiryDate, url: targetUrl }),
     })
         .then((response) => response.json())
         .then((data) => {
-            if (data.message) {
-                console.log(data.message);
-                fetchLinks(); // Links erneut abrufen
+            if (data.token) {
+                // URL mit Token erstellen
+                const url = `http://localhost:3000/access-link?token=${data.token}`;
+
+                // Link in der Datenbank speichern
+                fetch("http://localhost:3000/create-link", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, expiryDate, url }),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.message) {
+                            console.log(data.message);
+                            fetchLinks(); // Links erneut abrufen
+                        }
+                    })
+                    .catch((err) =>
+                        console.error("Fehler beim Erstellen des Links:", err)
+                    );
+            } else {
+                console.error("Fehler: Kein Token erhalten.");
             }
         })
-        .catch((err) => console.error("Fehler beim Erstellen des Links:", err));
+        .catch((err) => console.error("Fehler beim Generieren des Tokens:", err));
 
     // Felder zurücksetzen
     document.getElementById("link-name").value = "";
     document.getElementById("date").value = "";
 });
+
 
 document.getElementById("delete-all").addEventListener("click", function () {
     fetch("http://localhost:3000/delete-links", {
