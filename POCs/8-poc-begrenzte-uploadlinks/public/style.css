@@ -1,6 +1,7 @@
 /* Styling für den Body */
 body {
     margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
@@ -9,6 +10,30 @@ body {
     height: 100vh;
     background: linear-gradient(135deg, #6a11cb, #2575fc);
     color: #ffffff;
+    overflow-y: auto; /* Ermöglicht vertikales Scrollen */
+}
+
+html, body {
+    height: 100%;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+button {
+    margin-top: 10px;
+}
+
+h2 {
+    margin-top: 20px;
 }
 
 /* Zentriert das Formular und verleiht ihm ein modernes Aussehen */

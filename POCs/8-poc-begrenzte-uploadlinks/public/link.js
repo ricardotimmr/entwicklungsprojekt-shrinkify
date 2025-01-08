@@ -10,11 +10,31 @@ function generateToken(name, expiryDate) {
     return `${base64Payload}.${signature}`;
 }
 
+// Links von der Datenbank abrufen
+function fetchLinks() {
+    fetch("http://localhost:3000/links")
+        .then((response) => response.json())
+        .then((data) => {
+            const linkList = document.getElementById("link-list");
+            linkList.innerHTML = ""; // Vorherige Links löschen
+
+            data.forEach((link) => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `
+                    <strong>Name:</strong> ${link.name} <br />
+                    <strong>Gültig bis:</strong> ${link.expiry_date} <br />
+                    <strong>Link:</strong> <a href="${link.url}" target="_blank">${link.url}</a>
+                `;
+                linkList.appendChild(listItem);
+            });
+        })
+        .catch((err) => console.error("Fehler beim Abrufen der Links:", err));
+}
+
 // Event-Listener für das Formular
 document.getElementById("link-form").addEventListener("submit", function (event) {
     event.preventDefault(); // Verhindert das Neuladen der Seite
 
-    // Eingabewerte abrufen
     const name = document.getElementById("link-name").value;
     const expiryDate = document.getElementById("date").value;
 
@@ -29,26 +49,47 @@ document.getElementById("link-form").addEventListener("submit", function (event)
     // Ablaufdatum überprüfen
     const currentDate = new Date();
     const expiry = new Date(expiryDate);
-
-    let link;
+    let url;
     if (currentDate > expiry) {
         // Link auf error.html verweisen, wenn abgelaufen
-        link = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/error.html`;
+        url = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/error.html`;
     } else {
         // Link erstellen
-        link = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/index.html?token=${token}`;
+        url = `http://127.0.0.1:3000/POCs/8-poc-begrenzte-uploadlinks/public/index.html?token=${token}`;
     }
-    
-    // Link in die Liste einfügen
-    const linkList = document.getElementById("link-list");
-    const listItem = document.createElement("li");
-    listItem.innerHTML = `
-        <strong>Name:</strong> ${name} <br />
-        <strong>Gültig bis:</strong> ${expiryDate} <br />
-        <strong>Link:</strong> <a href="${link}" target="_blank">${link}</a>
-    `;
-    linkList.appendChild(listItem);
+
+    fetch("http://localhost:3000/create-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, expiryDate, url }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.message) {
+                console.log(data.message);
+                fetchLinks(); // Links erneut abrufen
+            }
+        })
+        .catch((err) => console.error("Fehler beim Erstellen des Links:", err));
 
     // Felder zurücksetzen
-    document.getElementById("link-form").reset();
+    document.getElementById("link-name").value = "";
+    document.getElementById("date").value = "";
 });
+
+document.getElementById("delete-all").addEventListener("click", function () {
+    fetch("http://localhost:3000/delete-links", {
+        method: "DELETE",
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.message) {
+                console.log(data.message);
+                fetchLinks(); // Links erneut abrufen
+            }
+        })
+        .catch((err) => console.error("Fehler beim Löschen der Links:", err));
+});
+
+// Links beim Laden der Seite abrufen
+fetchLinks();
