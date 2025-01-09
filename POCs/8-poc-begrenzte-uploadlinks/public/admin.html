@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>8-begrenzte-uploadlinks</title>
+        <link rel="stylesheet" href="/style.css">
+    </head>
+    <body>
+        <form id="link-form">
+            <label for="link-name">Name des Links:</label>
+            <input type="text" id="link-name" required /> <br />
+            <label for="date">Gültig bis:</label>
+            <input type="date" id="date" required /> <br />
+            <input type="submit" value="Link erstellen" />
+        </form>
+        <button id="delete-all">Alle Links löschen</button>
+
+        <h2>Erstellte Links</h2>
+        <ul id="link-list"></ul> <!-- Liste der Links -->
+        <script src="link.js"></script>
+    </body>
+</html>
