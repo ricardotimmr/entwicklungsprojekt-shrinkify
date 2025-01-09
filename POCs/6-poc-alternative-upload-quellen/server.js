@@ -1,9 +1,12 @@
 const express = require("express");
 const multer = require("multer");
+const cors = require("cors");
 const path = require("path");
 
 const app = express();
 const port = 3000;
+
+app.use(cors({ origin: "*" }));  // For testing purposes, allow all origins.
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -17,7 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB limit
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB limit
     fileFilter: (req, file, cb) => {
         const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
         if (allowedTypes.includes(file.mimetype)) {
@@ -32,6 +35,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Upload route
 app.post("/upload", upload.single("file"), (req, res) => {
+    console.log(req.file);  // Log the uploaded file data for debugging purposes
     if (!req.file) {
         return res.status(400).json({ message: "No file uploaded." });
     }
