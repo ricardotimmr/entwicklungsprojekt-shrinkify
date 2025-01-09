@@ -1,0 +1,76 @@
+/* Allgemeine Einstellungen für Body */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%; /* Nötig, um korrekt zu rendern */
+    overflow-x: hidden; /* Horizontales Scrollen deaktivieren */
+    overflow-y: auto; /* Vertikales Scrollen aktivieren */
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #ffffff;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Styling für das Formular */
+form {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 30px;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+
+/* Buttons */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #ffffff;
+    background: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Liste der Links */
+#link-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px auto;
+    max-width: 90%; /* Maximal 90% der Bildschirmbreite */
+    overflow-wrap: break-word; /* Lange Wörter umbrechen */
+}
+
+#link-list li {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    word-wrap: break-word; /* Lange Wörter umbrechen */
+    overflow-wrap: break-word;
+    max-width: 100%; /* Begrenzung auf die Breite des übergeordneten Elements */
+}
+
+#link-list a {
+    color: #00ffcc;
+    text-decoration: none;
+}
+
+#link-list a:hover {
+    text-decoration: underline;
+}
