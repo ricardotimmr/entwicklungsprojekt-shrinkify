@@ -1,0 +1,84 @@
+.icon {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    margin-right: 0;
+    direction: ltr;
+    font-family: var(--ff-icons);
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-style: normal;
+    font-weight: normal;
+    letter-spacing: normal;
+    line-height: inherit;
+    text-rendering: optimizelegibility;
+    text-transform: none;
+    vertical-align: bottom;
+    white-space: nowrap;
+    word-wrap: normal;
+  }
+  
+  .has-icon::before {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    direction: ltr;
+    font-family: var(--ff-icons);
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-style: normal;
+    font-weight: normal;
+    letter-spacing: normal;
+    line-height: inherit;
+    text-rendering: optimizelegibility;
+    text-transform: none;
+    vertical-align: bottom;
+    white-space: nowrap;
+    word-wrap: normal;
+  }
+  
+  .icon-s {
+    font-size: var(--s);
+    line-height: var(--s);
+  }
+  
+  .icon-m {
+    font-size: var(--m);
+    line-height: var(--m);
+  }
+  
+  .icon-l {
+    font-size: var(--l);
+    line-height: var(--l);
+  }
+  
+  .icon-xl {
+    font-size: var(--xl);
+    line-height: var(--xl);
+  }
+  
+  .icon-xxl {
+    font-size: var(--xxl);
+    line-height: var(--xxl);
+  }
+  
+  .icon-xxxl {
+    font-size: var(--xxxl);
+    line-height: var(--xxxl);
+  }
+  
+  .icon.md-dark { color: var(--lightest); }
+  .icon.md-light { color: var(--darkest); }
+  
+  .icon-inline {
+    margin-right: var(--xs);
+    font-size: var(--m);
+  }
+  
+  .icon::before {
+    content: attr(data-icon);
+  }
+  
+  .icon-video::before { content: "smart_display"; }

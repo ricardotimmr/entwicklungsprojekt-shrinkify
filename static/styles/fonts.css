@@ -1,0 +1,19 @@
+@font-face {
+  font-family: material-icons;
+  src: url("../fonts/Material_Icons/font/MaterialIconsOutlined-Regular.otf")
+    format("opentype");
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/Inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  font-weight: 100 900; /* Variable Font unterstützt Gewichte von 100 bis 900 */
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("../fonts/Sora/Sora-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900; /* Variable Font unterstützt Gewichte von 100 bis 900 */
+  font-style: normal;
+}

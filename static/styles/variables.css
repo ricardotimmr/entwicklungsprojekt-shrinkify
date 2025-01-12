@@ -1,0 +1,52 @@
+:root {
+    --color-purple-dark: #100422;
+    --color-purple: #3B275A;
+    --color-blue-light: #1A94C4;
+    --color-grey: #746789;
+    --color-red: #AD2F2F;
+    --color-white: #F4F3F2;
+    --color-fade-blue: #12152e;
+    --color-fade-purple: #230a2a;
+
+    --ff-primary: 'Inter', sans-serif;
+    --ff-logo: 'Sora', sans-serif;
+    --ff-icons: material-icons;
+
+    --lh-tight: 100%;
+    --lh-normal: 130%;
+    --lh-loose: 150%;
+
+    --fw-light: 200;
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-bold: 600;
+    --fw-logo: 700;
+    
+    --basefont-size: 18px;
+    
+    --xs: 15px;
+    --s: 20px;
+    --m: 25px;
+    --l: 30px;
+    --xl: 50px;
+    --xxl: 65px;
+    --xxxl: 80px;
+
+    --size-xs: 80px;
+
+    --fs-logo: 32px;
+    --fs-s: 16px;
+    --fs-m: 18px;
+    --fs-l: 22px;
+    --fs-xl: 48px;
+
+    --eighth: calc(var(--m) / 8);
+    --quarter: calc(var(--m) / 4);
+    --half: calc(var(--m) / 2);
+
+    --grid-item-size-max: 300px;
+
+    --tr-fast: 0.3s;
+    --tr-normal: 0.6s;
+    --tr-slow: 1s;
+  }
