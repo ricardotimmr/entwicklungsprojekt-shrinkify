@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shrinkify.</title>
+    <link rel="stylesheet" href="styles/combined.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>shrinkify.</h1>
+      <ul>
+        <li><a href="/">Über uns</a></li>
+        <li><a href="/">Support</a></li>
+        <li><a href="/">Login</a></li>
+      </ul>
+    </header>
+
+    <main>
+      <section class="overview">
+        <h2>Projektname</h2>
+        <div class="instructions">
+          <h3>So funktioniert's:</h3>
+          <p>
+            1. Dateien hochladen: Ziehen Sie Ihre Dateien hierher oder klicken
+            Sie auf "Browse File".
+          </p>
+          <p>
+            2. Optimierung: Wir kompriemieren Ihre Dateien in Sekundenschnelle.
+          </p>
+          <p>3. Download: Laden Sie die optimierten Dateien sofort herunter.</p>
+        </div>
+        <div id="drop-area">
+            <img src="" alt="upload-icon">
+          <p>Drag & Drop zum Hochladen von Dateien</p>
+          <p>oder</p>
+          <button type="submit">Browse File</button>
+          <input
+            type="file"
+            id="fileInput"
+            name="file"
+            accept=".jpg, .jpeg, .png"
+            multiple>
+          <ul class="upload-options">
+            <li>
+              <img src="/" alt="dropbox-logo">
+              <p>Dropbox</p>
+            </li>
+            <li>
+              <img src="/" alt="google-logo">
+              <p>Google Drive</p>
+            </li>
+            <li>
+              <img src="/" alt="url-icon">
+              <p>URL</p>
+            </li>
+          </ul>
+        </div>
+        <div class="file-view">
+          <h4>Heute</h4>
+          <ul class="file-list-today">
+            <li>
+              <div>
+                <img class="preview" src="/" alt="preview">
+                <p class="filename">meine-datei.jpg</p>
+                <p class="timestamp">Datei lädt hoch</p>
+              </div>
+              <div>
+                <span class="icon">close</span>
+                <span class="icon">delete</span>
+                <span class="icon">download</span>
+              </div>
+              <div id="uploadStatus"></div>
+              <div id="toastContainer"></div>
+            </li>
+            <li>
+              <div>
+                <img class="preview" src="/" alt="preview">
+                <p class="filename">meine-datei.jpg</p>
+                <p class="timestamp">19:24</p>
+              </div>
+              <div>
+                <span class="icon hidden">close</span>
+                <span class="icon">delete</span>
+                <span class="icon">download</span>
+              </div>
+            </li>
+          </ul>
+          <button>aktuelle herunterladen</button>
+          <h4>Frühere Uploads</h4>
+          <ul class="file-list">
+            <li>
+              <div>
+                <img class="preview" src="/" alt="preview">
+                <p class="filename">meine-datei.jpg</p>
+                <p class="timestamp">19:24</p>
+              </div>
+              <div>
+                <span class="icon">delete</span>
+                <span class="icon">download</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="waiting-list">
+          <h4>Warteschlange</h4>
+          <ul>
+            <li><p>andere-datei.jpg</p></li>
+            <li><p>meine-datei.jpg</p></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="settings-container">
+        <div class="info">
+          <div class="settings">
+            <h2>Einstellungen</h2>
+            <ul>
+              <li>
+                <p><strong>Dateiformate</strong></p>
+                <p>.jpg</p>
+              </li>
+              <li>
+                <p><strong>Dateigröße (max.)</strong></p>
+                <p>50 MB</p>
+              </li>
+              <li>
+                <p><strong>Komprimierungsgrad</strong></p>
+                <p>80% Qualität</p>
+              </li>
+              <li>
+                <p><strong>Ablaufdatum des Links</strong></p>
+                <p>31.12.24</p>
+              </li>
+              <li>
+                <p><strong>Guthaben Anzeige</strong></p>
+                <p>6 Credits</p>
+              </li>
+            </ul>
+            <span class="icon">add_circle</span>
+            <p>Guthabe anfragen</p>
+          </div>
+          <div class="contact">
+            <h2>Content Manager</h2>
+            <p>Jonas Weber</p>
+            <p>Pixel and Code Technologies</p>
+            <p>Behrenstraße 24</p>
+            <p>10117 Berlin</p>
+            <p>+49 30 273828</p>
+            <p>jonas.weber@pixelcode.de</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
