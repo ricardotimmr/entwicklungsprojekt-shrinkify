@@ -6,7 +6,6 @@ body {
   hyphens: auto;
   line-height: var(--lh-normal);
   color: var(--color-white);
-  height: 100vh;
   background: linear-gradient(
     135deg,
     var(--color-fade-blue),
@@ -15,7 +14,8 @@ body {
 }
 
 main {
-  margin-left: var(--size-xxxl);
+  margin-left: var(--xxxl);
+  margin-right: var(--xxxl);
 }
 
 header {
