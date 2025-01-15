@@ -15,7 +15,8 @@ body {
 }
 
 main {
-  margin-left: var(--size-xxxl);
+  margin-left: var(--xxxl);
+  margin-right: var(--xxxl);
 }
 
 header {
