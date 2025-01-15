@@ -6,7 +6,6 @@ body {
   hyphens: auto;
   line-height: var(--lh-normal);
   color: var(--color-white);
-  height: 100vh;
   background: linear-gradient(
     135deg,
     var(--color-fade-blue),
