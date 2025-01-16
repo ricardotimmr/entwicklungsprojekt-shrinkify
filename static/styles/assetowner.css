@@ -58,12 +58,128 @@ main {
     background-color: var(--color-purple-dark);
     text-align: center;
     cursor: pointer;
+
+    img {
+        width: var(--xxl);
+        height: var(--xxl);
+    }
+
+    p {
+        font-size: var(--fs-l);
+        font-weight: var(--fw-bold);
+        margin-bottom: 10px;
+    }
+
+    button {
+        padding: 10px 50px;
+        font-size: var(--fs-l);
+        color: #ffffff;
+        background: var(--color-purple);
+        border: none;
+        border-radius: 5px;
+    }
+
+    .upload-options {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: var(--s);
+        margin-top: var(--l);
+
+        li {
+            display: flex;
+            flex-direction: row;
+
+            img {
+                height: var(--l);
+                width: auto;
+                margin-right: var(--xs);
+            }
+        }
+    }
+}
+
+input[type="file"] {
+    display: none; /* Verstecke das Standard-Dateiauswahlfeld */
+}
+
+.file-view {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 3fr 1fr;
+    margin-top: 15px;
+
+    h4 {
+        font-size: var(--fs-m);
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: var(--fs-s);
+        font-weight: var(--fw-bold);
+        color: #ffffff;
+        background: var(--color-purple);
+        border: none;
+        border-radius: 5px;
+        margin-bottom: var(--xxxl);
+    }
+}
+
+.file-list-today {
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-item {
+    max-width: 650px;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 2fr 1fr 1fr;
+    font-size: var(--fs-s);
+
+    .prev-pic {
+        height: var(--l);
+        width: var(--l);
+        margin-right: var(--m);
+    }
+
+    .file-info {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .timestamp {
+        color: var(--color-grey);
+        text-align: right;
+    }
+    
+    .file-actions {
+        text-align: right;
+        font-size: var(--m);
+        gap: var(--xl);
+
+        .close {
+            color: var(--color-red);
+        }
+    }
+}
+
+.waiting-list {
+    color: var(--color-grey);
+
+    p {
+        font-size: var(--fs-s);
+        margin-bottom: 0;
+    }
 }
 
 .settings-container {
     width: 245px;
     height: 100%;
     margin-top: var(--xxl);
+    margin-left: var(--m);
     padding: var(--l);
 
     background: var(--color-purple-dark);
@@ -103,4 +219,8 @@ main {
             font-weight: var(--fw-bold);
         }
     }
+}
+
+.hidden {
+    display: none;
 }

@@ -33,7 +33,7 @@
           <p>3. Download: Laden Sie die optimierten Dateien sofort herunter.</p>
         </div>
         <div id="drop-area">
-            <img src="" alt="upload-icon">
+            <img src="../assets/upload-logo.png" alt="upload-icon">
           <p>Drag & Drop zum Hochladen von Dateien</p>
           <p>oder</p>
           <button type="submit">Browse File</button>
@@ -45,43 +45,44 @@
             multiple>
           <ul class="upload-options">
             <li>
-              <img src="/" alt="dropbox-logo">
+              <img src="../assets/dropbox-logo.svg.png" alt="dropbox-logo">
               <p>Dropbox</p>
             </li>
             <li>
-              <img src="/" alt="google-logo">
+              <img src="../assets/google-drive-logo.png" alt="google-logo">
               <p>Google Drive</p>
             </li>
             <li>
-              <img src="/" alt="url-icon">
+              <img src="../assets/link-logo.png" alt="url-icon">
               <p>URL</p>
             </li>
           </ul>
         </div>
         <div class="file-view">
+        <div class="file-lists">
           <h4>Heute</h4>
           <ul class="file-list-today">
-            <li>
-              <div>
-                <img class="preview" src="/" alt="preview">
+            <li class="file-item">
+              <div class="file-info">
+                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
                 <p class="filename">meine-datei.jpg</p>
-                <p class="timestamp">Datei lädt hoch</p>
               </div>
-              <div>
-                <span class="icon">close</span>
+              <p class="timestamp">Datei lädt hoch</p>
+              <div class="file-actions">
+                <span class="icon close">close</span>
                 <span class="icon">delete</span>
                 <span class="icon">download</span>
               </div>
-              <div id="uploadStatus"></div>
-              <div id="toastContainer"></div>
+              <!-- <div id="uploadStatus hidden"></div>
+              <div id="toastContainer hidden"></div> -->
             </li>
-            <li>
-              <div>
-                <img class="preview" src="/" alt="preview">
+            <li class="file-item">
+              <div class="file-info">
+                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
                 <p class="filename">meine-datei.jpg</p>
-                <p class="timestamp">19:24</p>
               </div>
-              <div>
+              <p class="timestamp">19:24</p>
+              <div class="file-actions">
                 <span class="icon hidden">close</span>
                 <span class="icon">delete</span>
                 <span class="icon">download</span>
@@ -91,13 +92,13 @@
           <button>aktuelle herunterladen</button>
           <h4>Frühere Uploads</h4>
           <ul class="file-list">
-            <li>
-              <div>
-                <img class="preview" src="/" alt="preview">
+            <li class="file-item">
+              <div class="file-info">
+                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
                 <p class="filename">meine-datei.jpg</p>
-                <p class="timestamp">19:24</p>
               </div>
-              <div>
+              <p class="timestamp">19:24</p>
+              <div class="file-actions">
                 <span class="icon">delete</span>
                 <span class="icon">download</span>
               </div>
@@ -111,6 +112,7 @@
             <li><p>meine-datei.jpg</p></li>
           </ul>
         </div>
+      </div>
       </section>
 
       <section class="settings-container">
