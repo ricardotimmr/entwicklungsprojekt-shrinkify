@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Datei hochladen mit Fortschrittsanzeige
             try {
-                await uploadFile(file, progressBar);
+                await uploadFile(file, progressBar, progressContainer);
                 updateFileStatus(file.name, "Erfolgreich hochgeladen");
             } catch (error) {
                 updateFileStatus(file.name, "Fehler beim Upload", true);
@@ -86,18 +86,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Datei hochladen mit Fortschrittsanzeige
-    function uploadFile(file, progressBar) {
+    function uploadFile(file, progressBar, progressContainer) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", "http://localhost:3000/upload");
-
+    
             xhr.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
                     const percentComplete = (event.loaded / event.total) * 100;
                     progressBar.style.width = `${percentComplete}%`;
+    
+                    // Wenn der Upload abgeschlossen ist (100%), entfernen wir die Statusanzeige
+                    if (percentComplete === 100) {
+                        setTimeout(() => {
+                            // Zeitpunkt des Uploads nur mit Stunden und Minuten anzeigen
+                            const timestamp = new Date();
+                            const hours = timestamp.getHours().toString().padStart(2, '0'); // Stunden mit führender Null
+                            const minutes = timestamp.getMinutes().toString().padStart(2, '0'); // Minuten mit führender Null
+    
+                            // Formatierter Zeitstempel (HH:mm)
+                            const formattedTime = `${hours}:${minutes}`;
+    
+                            // Zeitstempel setzen
+                            progressContainer.querySelector(".timestamp").textContent = formattedTime;
+                            progressContainer.querySelector(".progress-container").style.display = 'none'; // Fortschrittsanzeige ausblenden
+                        }, 500); // Warten Sie, bis die Fortschrittsanzeige auf 100% steht
+                    }
                 }
             };
-
+    
             xhr.onload = () => {
                 if (xhr.status === 200) {
                     resolve();
@@ -106,16 +123,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     reject(new Error(`Fehler beim Upload: ${xhr.statusText}`));
                 }
             };
-
+    
             xhr.onerror = () => {
                 reject(new Error("Netzwerkfehler beim Hochladen der Datei"));
             };
-
+    
             const formData = new FormData();
             formData.append("file", file);
             xhr.send(formData);
         });
-    }
+    }    
 
     // Update-Status für die Datei (zeigen, ob sie erfolgreich hochgeladen wurde oder nicht)
     function updateFileStatus(fileName, status, isError = false) {
