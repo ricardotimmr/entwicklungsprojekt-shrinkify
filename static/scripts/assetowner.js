@@ -3,11 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const dropdownContent = document.querySelector(".dropdown-content");
     const fileInput = document.getElementById("fileInput");
     const browseButton = document.getElementById("browseButton");
-    const uploadStatus = document.getElementById("uploadStatus");
     const toastContainer = document.getElementById("toastContainer");
+    const fileListToday = document.getElementById("file-list-today");
+    const waitingList = document.getElementById("waiting-list");
 
     // Dropdown-Menü anzeigen/verbergen
-    if (dropdownBtn && dropdownContent) { 
+    if (dropdownBtn && dropdownContent) {
         dropdownBtn.addEventListener("click", function () {
             dropdownContent.classList.toggle("show");
         });
@@ -17,16 +18,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 dropdownContent.classList.remove("show");
             }
         });
-    } else {
-        console.error("Dropdown-Elemente wurden nicht gefunden!");
     }
 
-    // 📤 Datei-Auswahl per Klick öffnen
+    // Datei-Auswahl per Klick öffnen
     browseButton.addEventListener("click", function () {
         fileInput.click();
     });
 
-    // 🎯 Starte Upload automatisch nach Auswahl der Dateien
+    // Starte Upload automatisch nach Auswahl der Dateien
     fileInput.addEventListener("change", async function () {
         const files = fileInput.files;
         if (!files.length) {
@@ -34,39 +33,59 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        uploadStatus.innerHTML = ""; // Reset Statusanzeige
-
+        // Für jede Datei, die hochgeladen wird
         for (const file of files) {
             if (file.size > 50 * 1024 * 1024) {
                 showToast(`Die Datei ${file.name} ist zu groß. Maximal 50 MB erlaubt.`, "error");
                 return;
             }
 
-            // Fortschrittsanzeige erstellen
-            const progressContainer = document.createElement("div");
-            progressContainer.className = "file-progress";
+            // Warteschlangen-Datei hinzufügen
+            addFileToQueue(file);
+
+            // Datei in "Heute"-Liste hinzufügen
+            const progressContainer = document.createElement("li");
+            progressContainer.className = "file-item";
             progressContainer.innerHTML = `
-                <div class="file-name">${file.name}</div>
-                <div class="progress-container">
-                    <div class="progress-bar"></div>
+                <div class="file-info">
+                    <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
+                    <p class="filename">${file.name}</p>
+                </div>
+                <p class="timestamp">Datei wird hochgeladen...</p>
+                <div class="file-actions">
+                    <span class="icon close">close</span>
+                    <span class="icon">delete</span>
+                    <span class="icon">download</span>
+                </div>
+                <div class="file-progress">
+                    <div class="progress-container">
+                        <div class="progress-bar"></div>
+                    </div>
                 </div>
             `;
-            uploadStatus.appendChild(progressContainer);
+            fileListToday.appendChild(progressContainer);
 
             const progressBar = progressContainer.querySelector(".progress-bar");
 
             // Datei hochladen mit Fortschrittsanzeige
             try {
                 await uploadFile(file, progressBar);
-                showToast(`Upload erfolgreich: ${file.name}`);
+                updateFileStatus(file.name, "Erfolgreich hochgeladen");
             } catch (error) {
-                showToast(`Fehler beim Upload der Datei: ${file.name}`, "error");
-                console.error("Fehler beim Upload:", error);
+                updateFileStatus(file.name, "Fehler beim Upload", true);
             }
         }
     });
 
-    // 📤 Datei-Upload-Funktion mit Fortschrittsanzeige
+    // Funktion zum Hinzufügen von Dateien zur Warteschlange
+    function addFileToQueue(file) {
+        const listItem = document.createElement("li");
+        listItem.classList.add("dropdown-content");
+        listItem.textContent = file.name;
+        waitingList.appendChild(listItem);
+    }
+
+    // Datei hochladen mit Fortschrittsanzeige
     function uploadFile(file, progressBar) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -98,7 +117,32 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 🔔 Toast-Benachrichtigungen anzeigen
+    // Update-Status für die Datei (zeigen, ob sie erfolgreich hochgeladen wurde oder nicht)
+    function updateFileStatus(fileName, status, isError = false) {
+        // Datei aus der "Warteschlange" entfernen
+        const waitingItems = document.querySelectorAll(".dropdown-content");
+        waitingItems.forEach(item => {
+            if (item.textContent === fileName) {
+                item.remove();
+            }
+        });
+
+        // Datei aus der "Heute"-Liste aktualisieren
+        const items = document.querySelectorAll(".file-item");
+        items.forEach(item => {
+            const fileNameElement = item.querySelector(".filename");
+            if (fileNameElement && fileNameElement.textContent === fileName) {
+                const timestamp = item.querySelector(".timestamp");
+                timestamp.textContent = status;
+                const progressBar = item.querySelector(".progress-bar");
+                if (isError) {
+                    progressBar.style.backgroundColor = "#f8d7da"; // rot für Fehler
+                }
+            }
+        });
+    }
+
+    // Toast-Benachrichtigungen anzeigen
     function showToast(message, type = "success") {
         const toast = document.createElement("div");
         toast.className = `toast ${type}`;

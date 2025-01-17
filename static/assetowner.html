@@ -63,34 +63,13 @@
         <div class="file-view">
         <div class="file-lists">
           <h4>Heute</h4>
-          <ul class="file-list-today">
-            <li class="file-item" id="loading">
-              <div class="file-info">
-                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
-                <p class="filename">meine-datei.jpg</p>
-              </div>
-              <p class="timestamp">Datei lädt hoch</p>
-              <div class="file-actions">
-                <span class="icon close">close</span>
-                <span class="icon">delete</span>
-                <span class="icon">download</span>
-              </div>
-              <div id="uploadStatus"></div>
-              <div id="toastContainer"></div>
-            </li>
-            <li class="file-item">
-              <div class="file-info">
-                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
-                <p class="filename">meine-datei.jpg</p>
-              </div>
-              <p class="timestamp">19:24</p>
-              <div class="file-actions">
-                <span class="icon hidden">close</span>
-                <span class="icon">delete</span>
-                <span class="icon">download</span>
-              </div>
-            </li>
+          <ul class="file-list-today" id="file-list-today">
+            <!-- Hier werden die Dateien dynamisch hinzugefügt -->
           </ul>
+          
+          <div class="waiting-list">
+            <button class="dropdown-btn">Warteschlange ▾</button>
+          </div>          
           <button>aktuelle herunterladen</button>
           <h4>Frühere Uploads</h4>
           <ul class="file-list">
@@ -107,13 +86,9 @@
             </li>
           </ul>
         </div>
-        <div class="waiting-list">
-          <button class="dropdown-btn">Warteschlange ▾</button>
-          <ul>
-            <li class="dropdown-content"><p>andere-datei.jpg</p></li>
-            <li class="dropdown-content"><p>meine-datei.jpg</p></li>
-          </ul>
-        </div>
+        <ul id="waiting-list">
+          <!-- Warteschlangen-Dateien werden hier angezeigt -->
+        </ul>
       </div>
       </section>
 
