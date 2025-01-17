@@ -113,17 +113,17 @@ input[type="file"] {
     h4 {
         font-size: var(--fs-m);
     }
+}
 
-    button {
-        padding: 10px 20px;
-        font-size: var(--fs-s);
-        font-weight: var(--fw-bold);
-        color: #ffffff;
-        background: var(--color-purple);
-        border: none;
-        border-radius: 5px;
-        margin-bottom: var(--xxxl);
-    }
+.file-lists > button {
+    padding: 10px 20px;
+    font-size: var(--fs-s);
+    font-weight: var(--fw-bold);
+    color: #ffffff;
+    background: var(--color-purple);
+    border: none;
+    border-radius: 5px;
+    margin-bottom: var(--xxxl);
 }
 
 .file-list-today {
@@ -138,6 +138,11 @@ input[type="file"] {
     grid-gap: 1rem;
     grid-template-columns: 2fr 1fr 1fr;
     font-size: var(--fs-s);
+    padding: var(--l) 0;
+
+    p {
+        margin-bottom: 0;
+    }
 
     .prev-pic {
         height: var(--l);
@@ -166,14 +171,118 @@ input[type="file"] {
     }
 }
 
-.waiting-list {
-    color: var(--color-grey);
+.file-item:not(:last-child) {
+    border-bottom: 1px solid var(--color-grey);
+}
 
-    p {
-        font-size: var(--fs-s);
-        margin-bottom: 0;
+#uploadStatus {
+    width: 3rem;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #007BFF;
+    border-radius: 5px;
+    width: 0;
+    transition: width 0.2s ease;
+}
+
+.progress-container {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    height: 10px;
+    overflow: hidden;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+/* Toast Nachricht */
+.toast {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease, fadeOut 0.5s ease 1.5s forwards;
+}
+
+/* Fehlermeldungen */
+.toast.error {
+    background-color: #ff4c4c;
+}
+
+/* Animationen */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
 }
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+
+.waiting-list {
+    display: inline-block;
+    color: var(--color-grey);
+}
+
+/* Button-Styling */
+.dropdown-btn {
+    border: none;
+    background: none;
+    font-size: var(--fs-s);
+    cursor: pointer;
+    color: var(--color-grey);
+    font-size: var(--fs-m);
+    font-weight: var(--fw-bold);
+    padding: 0;
+    padding-top: var(--m);
+}
+
+/* Dropdown-Liste verstecken */
+.dropdown-content {
+    display: none;
+    padding: 10px 0;
+    list-style: none;
+    font-size: var(--fs-s);
+    font-weight: var(--fw-bold);
+}
+
+/* Dropdown-Elemente */
+.dropdown-content li {
+    padding: 8px 15px;
+    border-bottom: 1px solid var(--color-grey-light);
+}
+
+/* Letztes Element ohne Linie */
+.dropdown-content li:last-child {
+    border-bottom: none;
+}
+
+/* Sichtbarkeit aktivieren */
+.show {
+    display: block;
+}
+
 
 .settings-container {
     width: 245px;

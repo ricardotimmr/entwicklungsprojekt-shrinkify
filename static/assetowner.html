@@ -32,11 +32,12 @@
           </p>
           <p>3. Download: Laden Sie die optimierten Dateien sofort herunter.</p>
         </div>
+        <form>
         <div id="drop-area">
-            <img src="../assets/upload-logo.png" alt="upload-icon">
+            <img src="/assets/upload-logo.png" alt="upload-icon">
           <p>Drag & Drop zum Hochladen von Dateien</p>
           <p>oder</p>
-          <button type="submit">Browse File</button>
+          <button type="button" id="browseButton">Browse File</button>
           <input
             type="file"
             id="fileInput"
@@ -58,11 +59,12 @@
             </li>
           </ul>
         </div>
+      </form>
         <div class="file-view">
         <div class="file-lists">
           <h4>Heute</h4>
           <ul class="file-list-today">
-            <li class="file-item">
+            <li class="file-item" id="loading">
               <div class="file-info">
                 <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
                 <p class="filename">meine-datei.jpg</p>
@@ -73,8 +75,8 @@
                 <span class="icon">delete</span>
                 <span class="icon">download</span>
               </div>
-              <!-- <div id="uploadStatus hidden"></div>
-              <div id="toastContainer hidden"></div> -->
+              <div id="uploadStatus"></div>
+              <div id="toastContainer"></div>
             </li>
             <li class="file-item">
               <div class="file-info">
@@ -106,10 +108,10 @@
           </ul>
         </div>
         <div class="waiting-list">
-          <h4>Warteschlange</h4>
+          <button class="dropdown-btn">Warteschlange ▾</button>
           <ul>
-            <li><p>andere-datei.jpg</p></li>
-            <li><p>meine-datei.jpg</p></li>
+            <li class="dropdown-content"><p>andere-datei.jpg</p></li>
+            <li class="dropdown-content"><p>meine-datei.jpg</p></li>
           </ul>
         </div>
       </div>
@@ -156,4 +158,6 @@
       </section>
     </main>
   </body>
+
+  <script src="./scripts/assetowner.js" defer></script>
 </html>
