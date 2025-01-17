@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node-webapp
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app:/app
+    environment:
+      NODE_ENV: development
+      SQLITE_DB_PATH: /app/data/database.sqlite
+    command: ["npm", "start"]
+    depends_on: 
+      - app_volume
+
+volumes:
+  app_volume:
+    driver: local
