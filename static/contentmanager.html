@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Contentmanager-page</title>
+        <link rel="stylesheet" href="styles/combined.css">
+        <link rel="stylesheet" href="styles/contentmanager.css">
+    </head>
+
+    <body>
+        <header>
+            <h1>shrinkify.</h1>  
+            <ul>
+                <li><a href="/">Über uns</a></li>
+                <li><a href="/">Support</a></li>
+                <li><a href="/">Login</a></li>
+            </ul>
+        </header>
+        <main>
+            <section class="contentmanager-options">
+                <div class="actions">
+                    <h2>Übersicht</h2>
+                    <nav>
+                        <a href="/" class="search">
+                            <p>Suche...</p>
+                            <span class="icon">search</span>
+                        </a>
+                        <a href="/" class="new-customer">
+                            <p>Neuer Kunde</p>
+                            <span class="icon">add</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="customer-list">
+                    <div class="customer">
+                        <div class="customer-name">
+                            <button class="customer-button" onclick="toggleCard(this)">MediaFlare</button>
+                            <span class="icon">download</span>
+                        </div>
+                        <div class="customer-links" style="display: none;">
+                        <div class="card">
+                            <div class="project">
+                                <h3>Projektname-1</h3>
+                                <div class="project-link">
+                                    <a href="/">https:/shrinkify.de/Projekt-1/...</a>
+                                    <span class="icon">delete</span>
+                                </div>
+                            </div>
+                            <div class="settings">
+                                <form class="setting-1">
+                                    <label for="fformat">Dateiformat</label>
+                                    <select class="fformat" name="fformat">
+                                        <option value=".jpg">.jpg</option>
+                                        <option value=".png">.png</option>
+                                    </select>
+                                    <label for="fsize">Dateigröße (max.)</label>
+                                    <input type="text" placeholder="50 MB" onblur="addMB(this)" class="fsize" name="fsize">
+                                 </form>
+                                 <form class="setting-2">
+                                    <label for="dcompression">Komprimierungsgrad</label>
+                                    <input type="text" placeholder="80%" onblur="addPercentageSymbol(this)" class="dcompression" name="dcompression">
+                                 </form>
+                                 <form class="setting-3">
+                                    <label for="edate">Ablaufdatum des Links</label>
+                                    <input type="date" class="edate" name="edate">
+                                    <label for="credits">Guthaben Anzeige</label>
+                                    <input type="text" placeholder="6 Credits" onblur="addCredits(this)" class="credits" name="credits">
+                                 </form>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="project">
+                                <h3>Projektname-2</h3>
+                                <div class="project-link">
+                                    <a href="/">https:/shrinkify.de/Projekt-1/...</a>
+                                    <span class="icon">delete</span>
+                                </div>
+                            </div>
+                            <div class="settings">
+                                <form class="setting-1">
+                                    <label for="fformat">Dateiformat</label>
+                                    <select class="fformat" name="fformat">
+                                        <option value=".jpg">.jpg</option>
+                                        <option value=".png">.png</option>
+                                    </select>
+                                    <label for="fsize">Dateigröße (max.)</label>
+                                    <input type="text" class="fsize" name="fsize">
+                                 </form>
+                                 <form class="setting-2">
+                                    <label for="dcompression">Komprimierungsgrad</label>
+                                    <input type="text" class="dcompression" name="dcompression">
+                                 </form>
+                                 <form class="setting-3">
+                                    <label for="edate">Ablaufdatum des Links</label>
+                                    <input type="text" class="edate" name="edate">
+                                    <label for="credits">Guthaben Anzeige</label>
+                                    <input type="text" class="credits" name="credits">
+                                 </form>
+                            </div>
+                        </div>
+                        </div>
+                        <a href="/" class="new-link">
+                            <p>Neuer Link</p>
+                            <span class="icon">add</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <script src="contentmanager.js"></script>
+    </body>
