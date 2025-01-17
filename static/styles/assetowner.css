@@ -1,0 +1,336 @@
+header {
+    padding-left: var(--xxxl);
+    padding-right: var(--xxxl);
+
+    ul {
+        width: 305px;
+        display: flex;
+        justify-content: space-between;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            margin-left: 0;
+        }
+      }
+}
+
+main {
+    margin-left: var(--xxxl);
+    margin-right: var(--xxxl);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.overview {
+    margin-top: var(--xxl);
+    width: 950px;
+
+    h2 {
+        font-weight: var(--fw-medium);
+        font-size: var(--fs-xl);
+        margin-top: 0;
+        margin-bottom: var(--xl);
+    }
+}
+
+.instructions {
+    margin-bottom: var(--l);
+
+    h3 {
+        font-size: var(--fs-l);
+        padding-top: 0;
+        margin-bottom: var(--m);
+    }
+
+    p {
+        font-size: var(--fs-s);
+        margin-bottom: 0;
+    }
+}
+
+#drop-area {
+    padding: 20px;
+    border: 2px dashed #fff;
+    border-radius: 10px;
+    background-color: var(--color-purple-dark);
+    text-align: center;
+    cursor: pointer;
+
+    img {
+        width: var(--xxl);
+        height: var(--xxl);
+    }
+
+    p {
+        font-size: var(--fs-l);
+        font-weight: var(--fw-bold);
+        margin-bottom: 10px;
+    }
+
+    button {
+        padding: 10px 50px;
+        font-size: var(--fs-l);
+        color: #ffffff;
+        background: var(--color-purple);
+        border: none;
+        border-radius: 5px;
+    }
+
+    .upload-options {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: var(--s);
+        margin-top: var(--l);
+
+        li {
+            display: flex;
+            flex-direction: row;
+
+            img {
+                height: var(--l);
+                width: auto;
+                margin-right: var(--xs);
+            }
+        }
+    }
+}
+
+input[type="file"] {
+    display: none; /* Verstecke das Standard-Dateiauswahlfeld */
+}
+
+.file-view {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 3fr 1fr;
+    margin-top: 15px;
+    align-items: start;
+
+    h4 {
+        font-size: var(--fs-m);
+    }
+}
+
+.file-lists > button {
+    padding: 10px 20px;
+    font-size: var(--fs-s);
+    font-weight: var(--fw-bold);
+    color: #ffffff;
+    background: var(--color-purple);
+    border: none;
+    border-radius: 5px;
+    margin-bottom: var(--xxxl);
+}
+
+.file-list-today {
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-item {
+    max-width: 650px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    font-size: var(--fs-s);
+    padding: var(--l) 0;
+
+    p {
+        margin-bottom: 0;
+    }
+
+    .prev-pic {
+        height: var(--l);
+        width: var(--l);
+        margin-right: var(--m);
+    }
+
+    .file-info {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .timestamp {
+        color: var(--color-grey);
+        text-align: right;
+    }
+    
+    .file-actions {
+        text-align: right;
+        font-size: var(--m);
+        gap: var(--xl);
+
+        .close {
+            color: var(--color-red);
+        }
+    }
+}
+
+.file-item:not(:last-child) {
+    border-bottom: 1px solid var(--color-grey);
+}
+
+#uploadStatus {
+    width: 3rem;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #007BFF;
+    border-radius: 5px;
+    width: 0;
+    transition: width 0.2s ease;
+}
+
+.progress-container {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    height: 10px;
+    overflow: hidden;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+/* Toast Nachricht */
+.toast {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease, fadeOut 0.5s ease 1.5s forwards;
+}
+
+/* Fehlermeldungen */
+.toast.error {
+    background-color: #ff4c4c;
+}
+
+/* Animationen */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+
+.waiting-list {
+    display: inline-block;
+    align-self: top;
+    color: var(--color-grey);
+}
+
+/* Button-Styling */
+.dropdown-btn {
+    border: none;
+    background: none;
+    font-size: var(--fs-s);
+    cursor: pointer;
+    color: var(--color-grey);
+    font-size: var(--fs-m);
+    font-weight: var(--fw-bold);
+    padding: 0;
+    padding-top: var(--m);
+}
+
+/* Dropdown-Liste verstecken */
+.dropdown-content {
+    display: none;
+    padding: 10px 0;
+    list-style: none;
+    font-size: var(--fs-s);
+    font-weight: var(--fw-bold);
+}
+
+/* Dropdown-Elemente */
+.dropdown-content li {
+    padding: 8px 15px;
+    border-bottom: 1px solid var(--color-grey-light);
+}
+
+/* Letztes Element ohne Linie */
+.dropdown-content li:last-child {
+    border-bottom: none;
+}
+
+/* Sichtbarkeit aktivieren */
+.show {
+    display: block;
+}
+
+
+.settings-container {
+    width: 245px;
+    height: 100%;
+    margin-top: var(--xxl);
+    margin-left: var(--m);
+    padding: var(--l);
+
+    background: var(--color-purple-dark);
+    border-radius: 25px;
+
+    h2{
+        font-size: var(--fs-l);
+        padding-top: 0;
+        margin-bottom: var(--xs)
+    }
+
+    p {
+        font-size: var(--fs-s);
+        margin-bottom: 0;
+        line-height: var(--lh-normal);
+    }
+
+    .settings-category {
+        font-weight: var(--fw-bold);
+        margin-top: var(--xs);    
+    }
+
+    a {
+        font-size: var(--fs-s);
+        color: var(--color-blue-light);
+    }
+
+    .settings {
+        margin-bottom: var(--xl);
+    }
+
+    .contact {
+        p {
+            margin-bottom: var(--xs);
+        }
+        .cm-name {
+            font-weight: var(--fw-bold);
+        }
+    }
+}
+
+.hidden {
+    display: none;
+}

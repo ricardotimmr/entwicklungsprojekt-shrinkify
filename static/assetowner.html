@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shrinkify.</title>
+    <link rel="stylesheet" href="styles/combined.css">
+    <link rel="stylesheet" href="styles/assetowner.css">
+  </head>
+
+  <body>
+    <header>
+      <h1>shrinkify.</h1>
+      <ul>
+        <li><a href="/">Über uns</a></li>
+        <li><a href="/">Support</a></li>
+        <li><a href="/">Login</a></li>
+      </ul>
+    </header>
+
+    <main>
+      <section class="overview">
+        <h2>Projektname</h2>
+        <div class="instructions">
+          <h3>So funktioniert's:</h3>
+          <p>
+            1. Dateien hochladen: Ziehen Sie Ihre Dateien hierher oder klicken
+            Sie auf "Browse File".
+          </p>
+          <p>
+            2. Optimierung: Wir komprimieren Ihre Dateien in Sekundenschnelle.
+          </p>
+          <p>3. Download: Laden Sie die optimierten Dateien sofort herunter.</p>
+        </div>
+        <form>
+        <div id="drop-area">
+            <img src="/assets/upload-logo.png" alt="upload-icon">
+          <p>Drag & Drop zum Hochladen von Dateien</p>
+          <p>oder</p>
+          <button type="button" id="browseButton">Browse File</button>
+          <input
+            type="file"
+            id="fileInput"
+            name="file"
+            accept=".jpg, .jpeg, .png"
+            multiple>
+          <ul class="upload-options">
+            <li>
+              <img src="../assets/dropbox-logo.svg.png" alt="dropbox-logo">
+              <p>Dropbox</p>
+            </li>
+            <li>
+              <img src="../assets/google-drive-logo.png" alt="google-logo">
+              <p>Google Drive</p>
+            </li>
+            <li>
+              <img src="../assets/link-logo.png" alt="url-icon">
+              <p>URL</p>
+            </li>
+          </ul>
+        </div>
+      </form>
+        <div class="file-view">
+        <div class="file-lists">
+          <h4>Heute</h4>
+          <ul class="file-list-today" id="file-list-today">
+            <!-- Hier werden die Dateien dynamisch hinzugefügt -->
+          </ul>        
+          <button>aktuelle herunterladen</button>
+          <h4>Frühere Uploads</h4>
+          <ul class="file-list">
+            <li class="file-item">
+              <div class="file-info">
+                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
+                <p class="filename">meine-datei.jpg</p>
+              </div>
+              <p class="timestamp">19:24</p>
+              <div class="file-actions">
+                <span class="icon">delete</span>
+                <span class="icon">download</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <button class="dropdown-btn">Warteschlange ▾</button>
+          <ul id="waiting-list">
+            <!-- Warteschlangen-Dateien werden hier angezeigt -->
+          </ul>
+      </div>
+      </section>
+
+      <section class="settings-container">
+        <div class="info">
+          <div class="settings">
+            <h2>Einstellungen</h2>
+            <ul>
+              <li>
+                <p class="settings-category">Dateiformate</p>
+                <p>.jpg</p>
+              </li>
+              <li>
+                <p class="settings-category">Dateigröße (max.)</p>
+                <p>50 MB</p>
+              </li>
+              <li>
+                <p class="settings-category">Komprimierungsgrad</p>
+                <p>80% Qualität</p>
+              </li>
+              <li>
+                <p class="settings-category">Ablaufdatum des Links</p>
+                <p>31.12.24</p>
+              </li>
+              <li>
+                <p class="settings-category">Guthaben Anzeige</p>
+                <p>6 Credits</p>
+              </li>
+            </ul> 
+            <a href="/"><span class="icon">add_circle</span> Guthaben anfragen</a>
+          </div>
+          <div class="contact">
+            <h2>Content Manager</h2>
+            <p class="cm-name">Jonas Weber</p>
+            <p>Pixel and Code Technologies   
+            </br>Behrenstraße 24
+            </br>10117 Berlin</p>
+            <p>+49 30 273828
+            </br>jonas.weber@pixelcode.de</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+
+  <script src="./scripts/assetowner.js" defer></script>
+</html>
