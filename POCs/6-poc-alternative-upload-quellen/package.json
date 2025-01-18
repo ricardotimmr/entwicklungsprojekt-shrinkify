@@ -1,9 +1,11 @@
 {
   "dependencies": {
+    "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
+    "fs": "^0.0.1-security",
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",
     "helmet": "^8.0.0",

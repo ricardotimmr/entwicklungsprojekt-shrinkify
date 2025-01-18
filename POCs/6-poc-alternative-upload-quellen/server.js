@@ -2,6 +2,8 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
+const axios = require("axios");
+const fs = require("fs");
 
 const app = express();
 const port = 3000;
@@ -47,6 +49,30 @@ app.post("/upload", upload.single("file"), (req, res) => {
             path: req.file.path,
         },
     });
+});
+
+// Upload from URL route
+app.post("/upload-url", async (req, res) => {
+    const { fileUrl } = req.body;
+
+    if (!fileUrl) {
+        return res.status(400).json({ message: "No URL provided." });
+    }
+
+    try {
+        const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+        const fileName = `${Date.now()}-${path.basename(fileUrl.split("?")[0])}`;
+        const filePath = path.join(__dirname, "uploads", fileName);
+
+        fs.writeFileSync(filePath, response.data);
+
+        res.status(200).json({
+            message: "File uploaded successfully from URL.",
+            file: { fileName, path: filePath },
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to download file." });
+    }
 });
 
 // Error handling for Multer
