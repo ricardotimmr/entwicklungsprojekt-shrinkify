@@ -1,6 +1,6 @@
-const CLIENT_ID = "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com"; // Replace with your Google Client ID
-const PICKER_API_KEY = "AIzaSyCKvK30z0OWcsJdHG41QT8qE3oWVmIgtH8"; // Replace with your Google API Key
-const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive";
+const CLIENT_ID = "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com";
+const PICKER_API_KEY = "AIzaSyCKvK30z0OWcsJdHG41QT8qE3oWVmIgtH8";
+const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive";
 
 let pickerApiLoaded = false;
 let oauthToken;
@@ -54,70 +54,66 @@ function pickerCallback(data) {
         const fileName = data.docs[0].name;
         console.log(`File selected. ID: ${fileId}, Name: ${fileName}`);
         showToast(`Selected file: ${fileName}`);
-        downloadFile(fileId, fileName);
+        uploadFromGoogleDrive(fileId);
     } else if (data.action === google.picker.Action.CANCEL) {
         console.log("Picker action canceled.");
         showToast("File selection canceled.");
     }
 }
 
-async function downloadFile(fileId, fileName) {
-    // Remove any trailing period from the file ID
-    const cleanFileId = fileId.replace(/\.$/, '');
-
-    const url = `https://www.googleapis.com/drive/v3/files/${cleanFileId}?alt=media&key=${PICKER_API_KEY}`;
-    const headers = new Headers({ Authorization: `Bearer ${oauthToken}` });
-
-    console.log(`Initiating download for file: ${fileName} $fileId: ${cleanFileId}`);
-    console.log("Download URL:", url);
-    console.log("Request Headers:", headers);
+// Function to download the file from Google Drive and upload it to your server
+async function uploadFromGoogleDrive(fileId) {
+    const accessToken = oauthToken;
 
     try {
-        const response = await fetch(url, { headers });
-        console.log("Download API Response:", response);
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
 
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        console.log("File downloaded successfully.");
+        if (response.ok) {
+            const blob = await response.blob();
+            const fileExtension = getFileExtensionFromMimeType(response.headers.get("Content-Type"));
 
-        const blob = await response.blob();
-        console.log("Downloaded Blob:", blob);
+            // Generate the correct filename with extension
+            const fileName = `${fileExtension}`;
+            
+            const formData = new FormData();
+            formData.append('file', blob, fileName);
 
-        // Upload the file to your backend
-        const formData = new FormData();
-        console.log(new File([blob], fileName));  // Check the file object before appending to FormData
-        formData.append("file", new File([blob], fileName));
-        console.log("Prepared FormData for upload:", formData);
+            // Send the file to your server
+            const uploadResponse = await fetch('http://localhost:3000/upload', {
+                method: 'POST',
+                body: formData,
+            });
 
-        await uploadFileToServer(formData, fileName);
+            const result = await uploadResponse.json();
+            if (result.message === 'File uploaded successfully.') {
+                showToast(`Upload successful: ${result.file.originalName}`);
+            } else {
+                showToast('Error uploading the file.', 'error');
+            }
+        } else {
+            showToast('Error fetching the file from Google Drive.', 'error');
+        }
     } catch (error) {
-        console.error("Error downloading file:", error);
-        showToast("Error downloading file.", "error");
+        showToast('Error during the upload process.', 'error');
     }
 }
 
-
-async function uploadFileToServer(formData, fileName) {
-    console.log(`Starting upload for file: ${fileName}`);
-    console.log("Upload URL: http://localhost:3000/upload");
-    console.log("FormData Content:", formData);
-
-    try {
-        const response = await fetch("http://localhost:3000/upload", {
-            method: "POST",
-            body: formData,
-        });
-        console.log("Upload API Response:", response);
-
-        if (response.ok) {
-            console.log(`File uploaded successfully: ${fileName}`);
-            showToast(`Upload successful: ${fileName}`);
-        } else {
-            console.error(`Error uploading file: ${response.statusText}`);
-            showToast(`Error uploading ${fileName}`, "error");
-        }
-    } catch (error) {
-        console.error(`Error uploading file: ${error}`);
-        showToast(`Error uploading ${fileName}`, "error");
+// Function to determine file extension from MIME type
+function getFileExtensionFromMimeType(mimeType) {
+    switch (mimeType) {
+        case 'image/png': return '.png';
+        case 'image/jpg':
+        case 'image/jpeg': return '.jpg';
+        case 'image/gif': return '.gif';
+        case 'application/pdf': return '.pdf';
+        case 'text/plain': return '.txt';
+        // Add more MIME types as needed
+        default: return '';
     }
 }
 
