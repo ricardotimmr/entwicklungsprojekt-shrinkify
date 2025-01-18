@@ -9,6 +9,7 @@ const app = express();
 const port = 3000;
 
 app.use(cors({ origin: "*" }));  // For testing purposes, allow all origins.
+app.use(express.json());  // Add this line to parse incoming JSON
 
 // Multer storage configuration
 const storage = multer.diskStorage({

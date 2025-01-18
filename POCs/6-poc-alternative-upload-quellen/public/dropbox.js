@@ -11,7 +11,7 @@ document.getElementById("selectFromDropBox").addEventListener("click", () => {
 
             try {
                 // Fetch and upload the file using the existing upload-url API
-                const response = await fetch("http://localhost:3000/upload-url", {
+                const response = await fetch("http://myapp.local:3000/upload-url", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
