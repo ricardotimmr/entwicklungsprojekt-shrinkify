@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const sharp = require("sharp");
 const path = require("path");
+const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const port = 3000;
@@ -20,9 +21,63 @@ app.get("/", (req, res) => {
 
 const fs = require("fs");
 
+// Verbindet mit der SQLite-Datenbank (die Datei wird automatisch erstellt, wenn sie nicht existiert)
+const db = new sqlite3.Database("./database.db", (err) => {
+  if (err) {
+    console.error("Fehler beim Verbinden mit der Datenbank:", err.message);
+  } else {
+    console.log("Mit der SQLite-Datenbank verbunden.");
+  }
+});
+
+// Tabelle erstellen, falls sie noch nicht existiert
+db.run(`
+  CREATE TABLE IF NOT EXISTS images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path TEXT NOT NULL,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+
 // Ordner für Uploads und komprimierte Bilder sicherstellen
 const uploadDir = path.resolve(__dirname, "../uploads");
 const compressedDir = path.resolve(__dirname, "../compressed");
+
+// Beispiel zum Speichern eines Bildpfads in der SQLite-Datenbank
+const saveImage = (filePath) => {
+  const sql = "INSERT INTO images (file_path) VALUES (?)";
+  db.run(sql, [filePath], (err) => {
+    if (err) {
+      console.error("Fehler beim Speichern des Bildes:", err.message);
+    } else {
+      console.log("Bild erfolgreich in der Datenbank gespeichert.");
+    }
+  });
+};
+
+const deleteImage = (filePath) => {
+  const sql = "DELETE FROM images WHERE file_path = ?";
+  db.run(sql, [filePath], (err) => {
+    if (err) {
+      console.error("Fehler beim Löschen des Bildes aus der Datenbank:", err.message);
+    } else {
+      console.log("Bild erfolgreich aus der Datenbank gelöscht:", filePath);
+    }
+  });
+};
+
+// Beispiel zum Abrufen aller Bilder
+const getImages = (callback) => {
+  const sql = "SELECT * FROM images";
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error("Fehler beim Abrufen der Bilder:", err.message);
+    } else {
+      callback(rows); // Hiermit werden alle Bilder als Array zurückgegeben
+    }
+  });
+};
 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 if (!fs.existsSync(compressedDir))
@@ -46,7 +101,6 @@ const upload = multer({
 
 app.use(express.static(path.join(__dirname, "src")));
 
-// Datei-Upload & Komprimierung
 app.post("/upload", upload.single("file"), async (req, res) => {
   console.log("Upload gestartet...");
 
@@ -71,37 +125,40 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     console.log(`Neue Größe: ${newWidth}x${newHeight}`);
 
     await sharp(inputFile)
-    .resize(newWidth, newHeight)
-    .jpeg({ quality: 80 })
-    .toFile(outputFilePath)
-    .then(() => {
+      .resize(newWidth, newHeight)
+      .jpeg({ quality: 80 })
+      .toFile(outputFilePath)
+      .then(() => {
         console.log("✅ Bild gespeichert:", outputFilePath);
-        
+
+        // Bildpfad in der DB speichern
+        saveImage(`/compressed/${outputFileName}`);
+
         // Überprüfen, ob die Datei existiert
         if (fs.existsSync(outputFilePath)) {
-            console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
+          console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
         } else {
-            console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
+          console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
         }
-    })
-    .catch(err => console.error("❌ Fehler beim Speichern:", err));
+      })
+      .catch((err) => console.error("❌ Fehler beim Speichern:", err));
 
     console.log("Bild erfolgreich gespeichert:", outputFilePath);
 
     res.status(200).json({
-        message: "Datei erfolgreich komprimiert.",
-        compressed: {
-          name: outputFileName,
-          path: `/compressed/${outputFileName}`, // Der Pfad zur komprimierten Datei
-          size: fs.statSync(outputFilePath).size,
-        },
-      });
-      
+      message: "Datei erfolgreich komprimiert.",
+      compressed: {
+        name: outputFileName,
+        path: `/compressed/${outputFileName}`, // Der Pfad zur komprimierten Datei
+        size: fs.statSync(outputFilePath).size,
+      },
+    });
   } catch (error) {
     console.error("Fehler bei der Bildverarbeitung:", error);
     res.status(500).json({ message: "Fehler bei der Komprimierung." });
   }
 });
+
 
 app.delete("/delete", express.json(), (req, res) => {
   console.log("🚨 DELETE-Anfrage erhalten:", req.body);
@@ -116,16 +173,29 @@ app.delete("/delete", express.json(), (req, res) => {
 
   console.log("🗑️ Versuche Datei zu löschen:", filePath);
 
+  // Datei aus dem Dateisystem löschen
   fs.unlink(filePath, (err) => {
     if (err) {
-      console.error("❌ Fehler beim Löschen:", err);
+      console.error("❌ Fehler beim Löschen der Datei:", err);
       return res.status(500).json({ message: "Fehler beim Löschen der Datei.", error: err.message });
     }
 
     console.log("✅ Datei erfolgreich gelöscht:", filename);
+
+    // Jetzt den Pfad der Datei aus der Datenbank löschen
+    deleteImage(`/compressed/${filename}`); // Hier den Pfad der Datei übergeben, der in der DB gespeichert wurde
+
     res.json({ message: "Datei erfolgreich gelöscht." });
   });
 });
+
+
+app.get("/images", (req, res) => {
+  getImages((images) => {
+    res.json(images);
+  });
+});
+
 
 
 // Statische Dateien bereitstellen
