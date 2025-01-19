@@ -1,3 +1,51 @@
+document.addEventListener("DOMContentLoaded", () => {
+    // Initial load of cards for all customers
+    const customers = document.querySelectorAll(".customer");
+    customers.forEach(customer => {
+        const customerId = customer.dataset.id;
+        if (customerId) {
+            loadCustomerCards(customerId);
+        }
+    });
+
+    // Event listener for submitting a new link
+    document.getElementById("submit-link").addEventListener("click", function () {
+        const projectName = document.getElementById("project-name").value;
+        const customerId = document.getElementById("new-link-form").dataset.customerId;
+
+        if (!projectName) {
+            alert("Bitte Projektname eingeben!");
+            return;
+        }
+
+        // Create the card in the database
+        fetch(`/cards`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                customerId: customerId,
+                name: projectName,
+                expirationDate: new Date().toISOString().split('T')[0] // Example expiration date
+            }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (data.success) {
+                    addCardToCustomer(data.card, customerId);
+                    closeNewLinkForm();
+                } else {
+                    alert("Fehler: " + data.message);
+                }
+            })
+            .catch((err) => console.error("Fehler beim Erstellen der Karte:", err));
+    });
+});
+
 // Function to toggle the customer card
 function toggleCard(button) {
     const card = button.closest('.customer').querySelector('.customer-links');
@@ -21,37 +69,15 @@ function closeNewLinkForm() {
     form.dataset.customerId = "";
 }
 
-// Event listener for creating a new link
-document.getElementById("submit-link").addEventListener("click", function () {
-    const projectName = document.getElementById("project-name").value;
-    const customerId = document.getElementById("new-link-form").dataset.customerId;
-
-    if (!projectName) {
-        alert("Bitte Projektname eingeben!");
-        return;
-    }
-
-    // Create the card in the database
-    fetch(`/create-card`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, projectName }),
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.success) {
-                addCardToCustomer(data.card, customerId);
-                closeNewLinkForm();
-            } else {
-                alert("Fehler: " + data.message);
-            }
-        })
-        .catch((err) => console.error("Fehler beim Erstellen der Karte:", err));
-});
-
+// Load cards for a specific customer
 function loadCustomerCards(customerId) {
-    fetch(`/customer-cards/${customerId}`)
-        .then((response) => response.json())
+    fetch(`/customers/${customerId}/cards`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then((data) => {
             if (data.success) {
                 const customerLinks = document.querySelector(
@@ -67,6 +93,7 @@ function loadCustomerCards(customerId) {
         .catch((err) => console.error("Fehler beim Laden der Karten:", err));
 }
 
+// Add a new card to the UI dynamically
 function addCardToCustomer(card, customerId) {
     const customer = document.querySelector(`.customer[data-id='${customerId}']`);
     const customerLinks = customer.querySelector(".customer-links");
@@ -74,9 +101,9 @@ function addCardToCustomer(card, customerId) {
     const cardHTML = `
         <div class="card" data-id="${card.id}">
             <div class="project">
-                <h3>${card.projectName}</h3>
+                <h3>${card.name}</h3>
                 <div class="project-link">
-                    <a href="${card.url || '/'}">${card.url || 'https:/shrinkify.de/Projekt-1/...'}</a>
+                    <a href="${card.url || '#'}">${card.url || 'Keine URL angegeben'}</a>
                     <span class="icon">delete</span>
                 </div>
             </div>
@@ -84,45 +111,23 @@ function addCardToCustomer(card, customerId) {
                 <form class="setting-1">
                     <label for="fformat">Dateiformat</label>
                     <select class="fformat" name="fformat" data-card-id="${card.id}">
-                        <option value=".jpg" ${card.format === '.jpg' ? 'selected' : ''}>.jpg</option>
-                        <option value=".png" ${card.format === '.png' ? 'selected' : ''}>.png</option>
+                        <option value=".jpg" ${card.file_format === '.jpg' ? 'selected' : ''}>.jpg</option>
+                        <option value=".png" ${card.file_format === '.png' ? 'selected' : ''}>.png</option>
                     </select>
                     <label for="fsize">Dateigröße (max.)</label>
-                    <input type="text" placeholder="50 MB" value="${card.size || ''}" onblur="addMB(this)" class="fsize" name="fsize" data-card-id="${card.id}">
+                    <input type="text" placeholder="50 MB" value="${card.max_file_size || ''}" class="fsize" name="fsize" data-card-id="${card.id}">
                  </form>
                  <form class="setting-2">
                     <label for="dcompression">Komprimierungsgrad</label>
-                    <input type="text" placeholder="80%" value="${card.compression || ''}" onblur="addPercentageSymbol(this)" class="dcompression" name="dcompression" data-card-id="${card.id}">
+                    <input type="text" placeholder="80%" value="${card.compression_level || ''}" class="dcompression" name="dcompression" data-card-id="${card.id}">
                  </form>
                  <form class="setting-3">
                     <label for="edate">Ablaufdatum des Links</label>
-                    <input type="date" value="${card.expiryDate || ''}" class="edate" name="edate" data-card-id="${card.id}">
-                    <label for="credits">Guthaben Anzeige</label>
-                    <input type="text" placeholder="6 Credits" value="${card.credits || ''}" onblur="addCredits(this)" class="credits" name="credits" data-card-id="${card.id}">
-                 </form>
+                    <input type="date" value="${card.expiration_date || ''}" class="edate" name="edate" data-card-id="${card.id}">
+                </form>
             </div>
         </div>
     `;
 
     customerLinks.insertAdjacentHTML("beforeend", cardHTML);
-}
-
-// Function to update card settings
-function updateCardSettings(event) {
-    const cardId = event.target.dataset.cardId;
-    const field = event.target.name;
-    const value = event.target.value;
-
-    fetch(`/update-card/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            if (!data.success) {
-                alert("Fehler beim Aktualisieren der Einstellungen: " + data.message);
-            }
-        })
-        .catch((err) => console.error("Fehler beim Aktualisieren der Einstellungen:", err));
 }

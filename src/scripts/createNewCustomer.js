@@ -1,50 +1,67 @@
-// Function to show the new customer form
-document.getElementById("new-customer-button").addEventListener("click", function () {
-    document.getElementById("new-customer-form").style.display = "block";
-});
+document.addEventListener("DOMContentLoaded", () => {
+    loadCustomers();
+    
+    // Show new customer form when clicking the button
+    document.getElementById("new-customer-button").addEventListener("click", () => {
+        document.getElementById("new-customer-form").style.display = "block";
+    });
 
-// Function to close the new customer form
-function closeCustomerForm() {
-    document.getElementById("new-customer-form").style.display = "none";
-}
+    // Close form when clicking the close button
+    document.querySelector(".close-btn").addEventListener("click", () => {
+        document.getElementById("new-customer-form").style.display = "none";
+    });
 
-document.getElementById("submit-customer").addEventListener("click", function () {
-    const name = document.getElementById("customer-name").value.trim();
-    const email = document.getElementById("customer-email").value.trim().toLowerCase();
-
-
-    if (name && email) {
-        // Send the data to the backend to create the customer
-        fetch("/create-customer", {
+    // Handle form submission
+    document.getElementById("submit-customer").addEventListener("click", () => {
+        const name = document.getElementById("customer-name").value.trim();
+        const email = document.getElementById("customer-email").value.trim();
+    
+        if (!name || !email) {
+            alert("Bitte füllen Sie alle Felder aus.");
+            return;
+        }
+    
+        console.log("Submitting:", { name, email }); // Debugging
+    
+        fetch("http://localhost:3000/customers", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                name: name,
-                email: email,
-            }),
+            body: JSON.stringify({ name, email }),
         })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    // Update the customer list on success
-                    addCustomerToList(data.customer);
-                    closeCustomerForm(); // Close the form after submission
-                } else {
-                    alert("Fehler: " + data.message);
-                }
-            })
-            .catch((error) => {
-                console.error("Fehler beim Erstellen des Kunden:", error);
-            });
-    } else {
-        alert("Bitte geben Sie sowohl den Namen als auch die E-Mail-Adresse ein.");
-    }
+        .then(response => response.json())
+        .then(data => {
+            console.log("Response from server:", data); // Debugging
+            if (data.error) {
+                alert("Fehler: " + data.error);
+            } else {
+                addCustomerToList(data);
+                resetCustomerForm();
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    });
 });
 
+// Fetch and display customers from the database
+function loadCustomers() {
+    fetch("http://localhost:3000/customers")
+        .then(response => response.json())
+        .then(customers => {
+            const customerList = document.querySelector(".customer-list");
+            customerList.innerHTML = "";
+            customers.forEach(customer => addCustomerToList(customer));
+        })
+        .catch(error => console.error("Error loading customers:", error));
+}
+
+// Add a new customer to the UI dynamically
 function addCustomerToList(customer) {
     const customerList = document.querySelector(".customer-list");
+
+    const customerDiv = document.createElement("div");
+    customerDiv.classList.add("customer");
 
     const customerHTML = `
     <div class="customer" data-id="${customer.id}">
@@ -68,4 +85,11 @@ function addCustomerToList(customer) {
 
 
     customerList.insertAdjacentHTML("beforeend", customerHTML);
+}
+
+// Reset the new customer form
+function resetCustomerForm() {
+    document.getElementById("customer-name").value = "";
+    document.getElementById("customer-email").value = "";
+    document.getElementById("new-customer-form").style.display = "none";
 }

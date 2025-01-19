@@ -1,14 +1,8 @@
 // Needed for overall functionality of the server
 const express = require("express");
-const multer = require("multer");
 const path = require("path");
-
-// Needed for secure link generation
 const sqlite3 = require("sqlite3").verbose();
-const jwt = require("jsonwebtoken");
-const ip = require("ip");
 
-//
 const app = express();
 const port = 3000;
 
@@ -17,387 +11,173 @@ app.use("/src/scripts", express.static(path.join(__dirname, "/src/scripts")));
 app.use("/src/fonts", express.static(path.join(__dirname, "/src/fonts")));
 app.use("/src/html", express.static(path.join(__dirname, "/src/html")));
 
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "/src/index.html"));
 });
 
-// SQLite-Datenbank initialisieren
-const db = new sqlite3.Database("db/shrinkifyDatabase.db", (err) => {        // Changed the path to the database
+// Database SQLite3
+const db = new sqlite3.Database('./database.sqlite', (err) => {
     if (err) {
-      console.error("Fehler beim Öffnen der Datenbank:", err.message);
+        console.error(err.message);
     } else {
-      console.log("Verbunden mit SQLite-Datenbank.");
-  
-      // Tabelle für Kunden erstellen, falls sie nicht existiert
-      db.run(
-        `CREATE TABLE IF NOT EXISTS customers (
-                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      name TEXT NOT NULL,
-                      email TEXT NOT NULL UNIQUE
-                  )`,
-        (err) => {
-          if (err) {
-            console.error("Fehler beim Erstellen der Kundentabelle:", err.message);
-          } else {
-            console.log("Tabelle 'customers' ist bereit.");
-          }
-        }
-      );
-  
-      // Tabelle für Links erstellen, falls sie nicht existiert, und Beziehung zur Kunden-Tabelle hinzufügen
-      db.run(
-        `CREATE TABLE IF NOT EXISTS links (
-                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      name TEXT NOT NULL,
-                      expiry_date TEXT NOT NULL,
-                      url TEXT,
-                      customer_id INTEGER,
-                      FOREIGN KEY (customer_id) REFERENCES customers(id)
-                  )`,
-        (err) => {
-          if (err) {
-            console.error("Fehler beim Erstellen der Links-Tabelle:", err.message);
-          } else {
-            console.log("Tabelle 'links' ist bereit.");
-          }
-        }
-      );
+        console.log('Connected to the SQLite database.');
     }
-  });
-  
-
-// Middleware
-app.use(express.json()); // Zum Verarbeiten von JSON-Daten
-app.use(express.static(path.join(__dirname, "src"))); // Statische Dateien
-
-// IP-Whitelist
-const IP_WHITELIST = [
-  "192.168.178.77", // Mia Zuhause
-  "192.168.178.0/24", // IP-Bereich Mia Wlan
-  "127.0.0.1", // IPv4 localhost
-  "::1", // IPv6 localhost
-];
-
-// Funktion zur Prüfung, ob eine IP in der Whitelist ist
-function isIpAllowed(clientIp) {
-  try {
-    // Durchlaufe alle Whitelist-IPs und prüfe auf Übereinstimmung
-    for (let whitelistIp of IP_WHITELIST) {
-      // Falls es eine direkte Übereinstimmung ist
-      if (clientIp === whitelistIp) {
-        return true;
-      }
-
-      // Prüfe, ob es eine CIDR-Notation ist
-      if (whitelistIp.includes("/")) {
-        if (ip.cidrSubnet(whitelistIp).contains(clientIp)) {
-          return true;
-        }
-      } else {
-        // Falls es keine CIDR-Adresse ist, prüfe, ob es eine exakte Übereinstimmung gibt
-        if (clientIp === whitelistIp) {
-          return true;
-        }
-      }
-    }
-    return false;
-  } catch (err) {
-    console.error(`Fehler bei der Prüfung der IP: ${err.message}`);
-    return false;
-  }
-}
-
-// Middleware für IP-Whitelisting (nur auf /access-link angewandt)
-function ipWhitelistMiddleware(req, res, next) {
-  const clientIp = req.headers["x-forwarded-for"] || req.ip;
-
-  console.log("Raw IP-Adresse aus Header oder req.ip:", clientIp); // Debugging: Roh-IP
-
-  // Normalisiere IPv6 zu IPv4, falls nötig
-  let normalizedIp = clientIp;
-
-  // Wenn es eine IPv6-Adresse ist, versuche sie zu normalisieren
-  if (ip.isV6Format(clientIp)) {
-    normalizedIp = ip.toString(clientIp); // Umwandlung zu einer lesbaren IPv6-Adresse
-  } else if (ip.isV4Format(clientIp)) {
-    normalizedIp = ip.toString(clientIp); // Bei IPv4 kein Umwandeln nötig, aber sicherstellen
-  }
-
-  // Spezielle Behandlung von "::1" als localhost
-  if (clientIp === "::1") {
-    normalizedIp = "127.0.0.1";
-  }
-
-  console.log("Normalisierte IP-Adresse:", normalizedIp); // Debugging: Normalisierte IP
-
-  // Prüfen, ob die IP in der Whitelist ist
-  if (isIpAllowed(normalizedIp)) {
-    console.log(`IP ${normalizedIp} ist in der Whitelist.`);
-    next();
-  } else {
-    console.log(
-      `Zugriff verweigert: IP ${normalizedIp} nicht in der Whitelist.`
-    );
-    res
-      .status(403)
-      .send("Zugriff verweigert: Ihre IP-Adresse ist nicht erlaubt.");
-  }
-}
-
-// Geheimer Schlüssel für die Token-Generierung und -Verifizierung
-const SECRET_KEY = "secret-key";
-
-// Route für die Token-Generierung
-app.post("/generate-token", (req, res) => {
-  const { name, expiryDate, url } = req.body;
-
-  if (!name || !expiryDate || !url) {
-    return res
-      .status(400)
-      .json({ message: "Name, Ablaufdatum und URL sind erforderlich." });
-  }
-
-  try {
-    // Token generieren
-    const payload = {
-      name: name,
-      url: url, // Ziel-URL
-      exp: Math.floor(new Date(expiryDate).getTime() / 1000), // Ablaufdatum in Sekunden
-    };
-    const token = jwt.sign(payload, SECRET_KEY);
-
-    res.status(200).json({ token });
-  } catch (err) {
-    console.error("Fehler beim Generieren des Tokens:", err.message);
-    res.status(500).json({ message: "Fehler beim Generieren des Tokens" });
-  }
 });
 
-// Route: Link erstellen
-app.post("/create-link", (req, res) => {
-  const { name, expiryDate, url } = req.body;
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS customers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE
+    )`, (err) => {
+        if (err) {
+            console.error('Error creating customers table:', err.message);
+        } else {
+            console.log('Customers table initialized.');
+        }
+    });
 
-  if (!name || !expiryDate || !url) {
-    return res
-      .status(400)
-      .json({ message: "Name, Ablaufdatum und URL sind erforderlich." });
-  }
-
-  const query = `INSERT INTO links (name, expiry_date, url) VALUES (?, ?, ?)`;
-  db.run(query, [name, expiryDate, url], function (err) {
-    if (err) {
-      console.error("Fehler beim Speichern des Links:", err.message);
-      res
-        .status(500)
-        .json({
-          message: "Fehler beim Speichern des Links",
-          error: err.message,
-        });
-    } else {
-      res.status(201).json({
-        message: "Link erfolgreich erstellt",
-        link: { id: this.lastID, name, expiryDate, url },
-      });
-    }
-  });
+    db.run(`CREATE TABLE IF NOT EXISTS customer_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        file_format TEXT,
+        max_file_size TEXT,
+        compression_level TEXT,
+        expiration_date DATE NOT NULL,
+        url TEXT,
+        FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
+    )`, (err) => {
+        if (err) {
+            console.error('Error creating customer_links table:', err.message);
+        } else {
+            console.log('Customer links table initialized.');
+        }
+    });
 });
 
-// Route: Links abrufen
-app.get("/links", (req, res) => {
-  const query = `SELECT * FROM links`;
-
-  db.all(query, [], (err, rows) => {
-    if (err) {
-      console.error("Fehler beim Abrufen der Links:", err.message);
-      res
-        .status(500)
-        .json({ message: "Fehler beim Abrufen der Links", error: err.message });
-    } else {
-      res.status(200).json(rows);
-    }
-  });
-});
-
-// Route zur Validierung und Weiterleitung mit IP-Whitelisting
-app.get("/access-link", ipWhitelistMiddleware, (req, res) => {
-  const { token } = req.query;
-
-  if (!token) {
-    return res.status(400).send("Token fehlt.");
-  }
-
-  try {
-    // Token verifizieren und dekodieren
-    const decoded = jwt.verify(token, SECRET_KEY);
-
-    // Ablaufdatum prüfen
-    const currentDate = Math.floor(Date.now() / 1000); // Aktuelles Datum in Sekunden
-    if (decoded.exp < currentDate) {
-      return res.status(403).send("Link ist abgelaufen.");
-    }
-
-    // Wenn gültig, zur Zielseite weiterleiten
-    res.redirect(decoded.url); // Ziel-URL aus dem Token
-  } catch (err) {
-    console.error("Fehler beim Verifizieren des Tokens:", err.message);
-    res.status(400).send("Ungültiger Token.");
-  }
-});
-
-
-
-// Customer Section
-
-// Route: Kunden erstellen
-app.post("/create-customer", (req, res) => {
+// Customer Routes
+// Create a new customer
+app.post('/customers', (req, res) => {
   const { name, email } = req.body;
 
   if (!name || !email) {
-      return res.json({ success: false, message: "Name und E-Mail sind erforderlich" });
+      return res.status(400).json({ error: "Name und Email sind erforderlich." });
   }
 
-  const query = `INSERT INTO customers (name, email) VALUES (?, ?)`;
-  db.run(query, [name, email], function (err) {
+  console.log("Received new customer:", { name, email });
+
+  db.run(`INSERT INTO customers (name, email) VALUES (?, ?)`, [name, email], function (err) {
       if (err) {
-          console.error("Fehler beim Einfügen des Kunden:", err.message);
-          return res.json({ success: false, message: "Fehler beim Hinzufügen des Kunden" });
+          return res.status(500).json({ error: err.message });
       }
 
-      // Standardmäßig leeres `cards`-Array anhängen
-      const newCustomer = { id: this.lastID, name, email, cards: [] };
-      res.json({ success: true, customer: newCustomer });
+      db.get(`SELECT * FROM customers WHERE id = ?`, [this.lastID], (err, row) => {
+          if (err) {
+              return res.status(500).json({ error: err.message });
+          }
+          res.json(row);
+      });
   });
 });
 
-
-
-
-
-
-// Multer Section
-
-// Speicheroptionen für Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "uploads/");
-    },
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
-    },
-  });
-  
-  // Filter für Dateitypen und Begrenzung der Dateigröße
-  const upload = multer({
-    storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB in Bytes
-    fileFilter: (req, file, cb) => {
-      const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-      if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error("Ungültiger Dateityp. Nur JPEG und PNG erlaubt."));
+// Fetch all customers
+app.get('/customers', (req, res) => {
+  db.all(`SELECT * FROM customers`, [], (err, rows) => {
+      if (err) {
+          return res.status(500).json({ error: err.message });
       }
-    },
+      res.json(rows);
   });
-  
-  // Fehlerbehandlung für Multer
-  app.use((err, req, res, next) => {
-      if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_FILE_SIZE") {
-          return res
-            .status(413)
-            .json({
-              message:
-                "Eine oder mehrere Dateien sind zu groß. Maximal 50 MB pro Datei erlaubt.",
-            });
+});
+
+// Card Routes
+// Create a new card
+app.post('/cards', (req, res) => {
+    const { customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate } = req.body;
+
+    if (!customerId || !name || !expirationDate) {
+        return res.status(400).json({
+            success: false,
+            message: "Kunden-ID, Name und Ablaufdatum sind erforderlich."
+        });
+    }
+
+    const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, url) 
+                   VALUES (?, ?, ?, ?, ?, ?, NULL)`;
+
+    db.run(query, [customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate], function (err) {
+        if (err) {
+            console.error("Fehler beim Hinzufügen der Karte:", err.message);
+            return res.status(500).json({ success: false, message: "Fehler beim Hinzufügen der Karte." });
         }
-      } else if (err) {
-        return res.status(400).json({ message: err.message });
-      }
-      next();
-    });
-  
-  // Upload-Route
-  app.post("/upload", upload.array("file", 10), (req, res) => {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Keine Dateien hochgeladen." });
-    }
-  
-    res.status(200).json({
-      message: `${req.files.length} Datei(en) erfolgreich hochgeladen.`,
-      files: req.files.map((file) => ({
-        originalName: file.originalname,
-        size: file.size,
-        path: file.path,
-      })),
-    });
-  });
 
-
-  app.post("/create-card", (req, res) => {
-    const { customerId, projectName } = req.body;
-  
-    if (!customerId || !projectName) {
-      return res.status(400).json({
-        success: false,
-        message: "Kunden-ID und Projektname sind erforderlich.",
-      });
-    }
-  
-    // Default expiry_date setzen, falls nicht angegeben
-    const defaultExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 Tage später
-      .toISOString()
-      .split("T")[0];
-  
-    const query = `
-      INSERT INTO links (name, expiry_date, url, customer_id)
-      VALUES (?, ?, NULL, ?)
-    `;
-  
-    db.run(query, [projectName, defaultExpiryDate, customerId], function (err) {
-      if (err) {
-        console.error("Fehler beim Erstellen der Karte:", err.message);
-        res.status(500).json({
-          success: false,
-          message: "Fehler beim Erstellen der Karte.",
+        db.get(`SELECT * FROM customer_links WHERE id = ?`, [this.lastID], (err, row) => {
+            if (err) {
+                return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
+            }
+            res.status(201).json({ success: true, card: row });
         });
-      } else {
-        res.status(201).json({
-          success: true,
-          card: { id: this.lastID, projectName, expiryDate: defaultExpiryDate, customerId },
-        });
-      }
     });
-  });
-  
-  
-  app.get("/customer-cards/:customerId", (req, res) => {
+});
+
+// Fetch all cards for a specific customer
+app.get('/customers/:customerId/cards', (req, res) => {
     const { customerId } = req.params;
-  
-    const query = `
-      SELECT id, name, expiry_date AS expiryDate, url
-      FROM links
-      WHERE customer_id = ?
-    `;
-  
+
+    const query = `SELECT * FROM customer_links WHERE customer_id = ?`;
     db.all(query, [customerId], (err, rows) => {
-      if (err) {
-        console.error("Fehler beim Abrufen der Karten:", err.message);
-        res.status(500).json({
-          success: false,
-          message: "Fehler beim Abrufen der Karten.",
-        });
-      } else {
-        res.status(200).json({
-          success: true,
-          cards: rows,
-        });
-      }
+        if (err) {
+            console.error("Fehler beim Abrufen der Karten:", err.message);
+            return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karten." });
+        }
+        res.status(200).json({ success: true, cards: rows });
     });
-  });
-  
+});
 
+// Update card details
+app.patch('/cards/:cardId', (req, res) => {
+    const { cardId } = req.params;
+    const { name, fileFormat, maxFileSize, compressionLevel, expirationDate, url } = req.body;
 
+    const query = `UPDATE customer_links SET 
+                   name = COALESCE(?, name),
+                   file_format = COALESCE(?, file_format),
+                   max_file_size = COALESCE(?, max_file_size),
+                   compression_level = COALESCE(?, compressionLevel),
+                   expiration_date = COALESCE(?, expiration_date),
+                   url = COALESCE(?, url)
+                   WHERE id = ?`;
+
+    db.run(query, [name, fileFormat, maxFileSize, compressionLevel, expirationDate, url, cardId], function (err) {
+        if (err) {
+            console.error("Fehler beim Aktualisieren der Karte:", err.message);
+            return res.status(500).json({ success: false, message: "Fehler beim Aktualisieren der Karte." });
+        }
+
+        db.get(`SELECT * FROM customer_links WHERE id = ?`, [cardId], (err, row) => {
+            if (err) {
+                return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
+            }
+            res.status(200).json({ success: true, card: row });
+        });
+    });
+});
+
+// Delete a card
+app.delete('/cards/:cardId', (req, res) => {
+    const { cardId } = req.params;
+
+    db.run(`DELETE FROM customer_links WHERE id = ?`, [cardId], function (err) {
+        if (err) {
+            console.error("Fehler beim Löschen der Karte:", err.message);
+            return res.status(500).json({ success: false, message: "Fehler beim Löschen der Karte." });
+        }
+        res.status(200).json({ success: true, message: "Karte erfolgreich gelöscht." });
+    });
+});
 
 // Server starten
 app.listen(port, () => {
