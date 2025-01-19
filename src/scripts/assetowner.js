@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
   <p class="timestamp">Datei wird hochgeladen...</p>
   <div class="file-actions">
       <span class="icon close">close</span>
-      <span class="icon">delete</span>
+      <span class="icon delete">delete</span>
       <span class="icon download">download</span>
   </div>
   <div class="file-progress">
@@ -151,9 +151,9 @@ document.addEventListener("DOMContentLoaded", function () {
           console.log("Erhaltener Bildpfad:", response.compressed.path);
 
           // Bild-Vorschau erst nach Upload setzen
-    const previewImg = progressContainer.querySelector(".prev-pic");
-    previewImg.src = response.compressed.path; 
-    console.log("Vorschau-Bild gesetzt auf:", previewImg.src);
+          const previewImg = progressContainer.querySelector(".prev-pic");
+          previewImg.src = response.compressed.path;
+          console.log("Vorschau-Bild gesetzt auf:", previewImg.src);
 
           // Download-Icon Funktion hinzufügen
           const downloadIcon =
@@ -182,13 +182,37 @@ document.addEventListener("DOMContentLoaded", function () {
             });
           }
 
-          // Delete-Icon Funktion hinzufügen
           const deleteIcon = progressContainer.querySelector(".icon.delete");
           if (deleteIcon) {
-            deleteIcon.addEventListener("click", () => {
-              console.log("🗑️ Datei entfernt aus Liste:", file.name);
-              progressContainer.remove();
+            console.log("🗑️ Delete-Icon gefunden für:", file.name); // Debug-Log hinzufügen
+
+            deleteIcon.addEventListener("click", async () => {
+              console.log("🗑️ Klick auf Delete-Icon für:", file.name); // Wird das Event ausgelöst?
+
+              try {
+                const response = await fetch("http://localhost:3000/delete", {
+                  method: "DELETE",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    filename: file.name.replace(/\.[^/.]+$/, ".jpeg"),
+                  }),
+                });
+
+                console.log("🌐 Server-Antwort erhalten");
+
+                const result = await response.json();
+                if (response.ok) {
+                  console.log("✅ Datei erfolgreich gelöscht:", file.name);
+                  progressContainer.remove();
+                } else {
+                  console.error("❌ Fehler beim Löschen:", result.message);
+                }
+              } catch (error) {
+                console.error("❌ Fehler beim Serveraufruf:", error);
+              }
             });
+          } else {
+            console.warn("⚠️ Kein Delete-Icon gefunden für:", file.name);
           }
 
           resolve();

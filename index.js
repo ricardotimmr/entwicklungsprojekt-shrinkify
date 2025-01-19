@@ -6,6 +6,9 @@ const path = require("path");
 const app = express();
 const port = 3000;
 
+app.use(express.json()); // JSON-Body Parser aktivieren
+app.use(express.urlencoded({ extended: true })); // Falls Form-Daten gesendet werden
+
 app.use("/src/styles", express.static(path.join(__dirname, "/src/styles")));
 app.use("/src/scripts", express.static(path.join(__dirname, "/src/scripts")));
 app.use("/src/fonts", express.static(path.join(__dirname, "/src/fonts")));
@@ -99,6 +102,31 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).json({ message: "Fehler bei der Komprimierung." });
   }
 });
+
+app.delete("/delete", express.json(), (req, res) => {
+  console.log("🚨 DELETE-Anfrage erhalten:", req.body);
+
+  if (!req.body || !req.body.filename) {
+    console.error("❌ req.body ist undefined oder 'filename' fehlt!", req.body);
+    return res.status(400).json({ message: "Fehlender Dateiname in der Anfrage." });
+  }
+
+  const { filename } = req.body;
+  const filePath = path.join(__dirname, "../compressed", filename);
+
+  console.log("🗑️ Versuche Datei zu löschen:", filePath);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error("❌ Fehler beim Löschen:", err);
+      return res.status(500).json({ message: "Fehler beim Löschen der Datei.", error: err.message });
+    }
+
+    console.log("✅ Datei erfolgreich gelöscht:", filename);
+    res.json({ message: "Datei erfolgreich gelöscht." });
+  });
+});
+
 
 // Statische Dateien bereitstellen
 app.use("/compressed", express.static(compressedDir));
