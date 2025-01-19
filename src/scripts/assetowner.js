@@ -28,68 +28,82 @@ document.addEventListener("DOMContentLoaded", function () {
     fileInput.click();
   });
   
-    // Lade Bilder aus der Datenbank und zeige sie in der Liste an
-    fetch("http://localhost:3000/images")
-      .then((response) => response.json())
-      .then((images) => {
-        // Entferne die existierenden Listenelemente, bevor neue Bilder hinzugefügt werden
-        fileListToday.innerHTML = "";
+  // Lade Bilder aus der Datenbank und zeige sie in der Liste an
+  fetch("http://localhost:3000/images")
+    .then((response) => response.json())
+    .then((images) => {
+      // Entferne die existierenden Listenelemente, bevor neue Bilder hinzugefügt werden
+      fileListToday.innerHTML = "";
 
-        images.forEach((image) => {
-          const fileName = image.file_path.split('/').pop(); // Extrahiere den Dateinamen aus dem Pfad
-          console.log('File name:', fileName);  // Debugging: Überprüfe den Dateinamen
-        
-          const listItem = document.createElement("li");
-          listItem.className = "file-item";
-          listItem.innerHTML = `
-            <div class="file-info">
-              <img class="prev-pic" src="${image.file_path}" alt="preview">
-              <p class="filename">${fileName}</p>  <!-- Zeige den Dateinamen an -->
-            </div>
-            <p class="timestamp">${image.uploaded_at}</p>
-            <div class="file-actions">
-              <span class="icon close">close</span>
-              <span class="icon delete">delete</span>
-              <span class="icon download">download</span>
-            </div>
-            <div class="file-progress">
-              <div class="progress-container">
-                <div class="progress-bar"></div>
-              </div>
-            </div>
-          `;
-          fileListToday.appendChild(listItem);        
+      images.forEach((image) => {
+        const fileName = image.file_path.split('/').pop(); // Extrahiere den Dateinamen aus dem Pfad
+        console.log('File name:', fileName);  // Debugging: Überprüfe den Dateinamen
 
-          const deleteIcon = listItem.querySelector(".icon.delete");
-          if (deleteIcon) {
-            deleteIcon.addEventListener("click", async () => {
-              try {
-                const response = await fetch("http://localhost:3000/delete", {
-                  method: "DELETE",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    filename: image.file_path.replace("/compressed/", ""),
-                  }),
-                });
+        const listItem = document.createElement("li");
+        listItem.className = "file-item";
+        listItem.innerHTML = `
+          <div class="file-info">
+            <img class="prev-pic" src="${image.file_path}" alt="preview">
+            <p class="filename">${fileName}</p>  <!-- Zeige den Dateinamen an -->
+          </div>
+          <p class="timestamp">${image.uploaded_at}</p>
+          <div class="file-actions">
+            <span class="icon close">close</span>
+            <span class="icon delete">delete</span>
+            <span class="icon download">download</span>
+          </div>
+          <div class="file-progress">
+            <div class="progress-container">
+              <div class="progress-bar"></div>
+            </div>
+          </div>
+        `;
+        fileListToday.appendChild(listItem);        
 
-                if (response.ok) {
-                  listItem.remove();
-                  console.log(
-                    "Datei aus der Liste und der Datenbank gelöscht."
-                  );
-                } else {
-                  console.error("Fehler beim Löschen der Datei.");
-                }
-              } catch (error) {
-                console.error("Fehler beim Löschen der Datei:", error);
+        const deleteIcon = listItem.querySelector(".icon.delete");
+        if (deleteIcon) {
+          deleteIcon.addEventListener("click", async () => {
+            try {
+              const response = await fetch("http://localhost:3000/delete", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  filename: image.file_path.replace("/compressed/", ""),
+                }),
+              });
+
+              if (response.ok) {
+                listItem.remove();
+                console.log("Datei aus der Liste und der Datenbank gelöscht.");
+              } else {
+                console.error("Fehler beim Löschen der Datei.");
               }
-            });
-          }
-        });
-      })
-      .catch((error) =>
-        console.error("Fehler beim Abrufen der Bilder:", error)
-      );
+            } catch (error) {
+              console.error("Fehler beim Löschen der Datei:", error);
+            }
+          });
+        }
+
+        // Download-Button für die geladenen Bilder aktivieren
+        const downloadIcon = listItem.querySelector(".icon.download");
+        if (downloadIcon) {
+          downloadIcon.addEventListener("click", () => {
+            console.log("Download angefordert für:", image.file_path);
+
+            const a = document.createElement("a");
+            a.href = image.file_path; // Der Pfad zur komprimierten Datei
+            a.download = fileName; // Der Dateiname wird als Download-Name genutzt
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          });
+        }
+      });
+    })
+    .catch((error) =>
+      console.error("Fehler beim Abrufen der Bilder:", error)
+    );
 
   // Starte Upload automatisch nach Auswahl der Dateien
   fileInput.addEventListener("change", async function () {
