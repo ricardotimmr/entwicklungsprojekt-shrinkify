@@ -1,90 +1,70 @@
-// Function to toggle the customer card
-function toggleCard(button) {
-    var card = button.closest('.customer').querySelector('.customer-links');
+// Open the new project form
+function openProjectForm(button) {
+    const customerDiv = button.closest(".customer");
+    const projectForm = customerDiv.querySelector(".new-project-form");
+    projectForm.style.display = "block";
+}
 
-    if (card) {
-        if (card.style.display === "none" || card.style.display === "") {
-            card.style.display = "block";
-        } else {
-            card.style.display = "none";
+// Close the new project form
+function closeProjectForm(button) {
+    const projectForm = button.closest(".new-project-form");
+    projectForm.style.display = "none";
+}
+
+// Handle form submission
+document.addEventListener("click", (event) => {
+    if (event.target.classList.contains("submit-project")) {
+        const customerDiv = event.target.closest(".customer");
+        const projectForm = customerDiv.querySelector(".new-project-form");
+        const projectName = projectForm.querySelector(".project-name").value.trim();
+        const fileFormat = projectForm.querySelector(".file-format").value;
+        const maxFileSize = projectForm.querySelector(".max-file-size").value.trim();
+        const compressionLevel = projectForm.querySelector(".compression-level").value.trim();
+        const expirationDate = projectForm.querySelector(".expiration-date").value;
+
+        if (!projectName || !maxFileSize || !compressionLevel || !expirationDate) {
+            alert("Bitte füllen Sie alle Felder aus.");
+            return;
         }
-    }
-}
 
-// Links von der Datenbank abrufen
-function fetchLinks() {
-    fetch("http://localhost:3000/links")
-        .then((response) => response.json())
-        .then((data) => {
-            const linkList = document.getElementById("link-list");
-            linkList.innerHTML = ""; // Vorherige Links löschen
+        const customerId = customerDiv.getAttribute("data-customer-id");
 
-            data.forEach((link) => {
-                const listItem = document.createElement("li");
-                listItem.innerHTML = `
-                    <strong>Name:</strong> ${link.name} <br />
-                    <strong>Gültig bis:</strong> ${link.expiry_date} <br />
-                    <strong>Link:</strong> <a href="${link.url}" target="_blank">${link.url}</a>
-                `;
-                linkList.appendChild(listItem);
-            });
+        fetch("http://localhost:3000/customer_links", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                customer_id: customerId,
+                project_name: projectName,
+                file_format: fileFormat,
+                max_file_size: maxFileSize,
+                compression_level: compressionLevel,
+                expiration_date: expirationDate,
+            }),
         })
-        .catch((err) => console.error("Fehler beim Abrufen der Links:", err));
-}
-
-// Event-Listener für das Formular
-document.getElementById("link-form").addEventListener("submit", function (event) {
-    event.preventDefault(); // Verhindert das Neuladen der Seite
-
-    const name = document.getElementById("link-name").value;
-    const expiryDate = document.getElementById("date").value;
-
-    if (!name || !expiryDate) {
-        alert("Bitte alle Felder ausfüllen!");
-        return;
+            .then((response) => response.json())
+            .then((link) => {
+                addLinkToCustomer(customerDiv, link);
+                closeProjectForm(event.target);
+            })
+            .catch((error) => console.error("Error:", error));
     }
-
-    // Ziel-URL für die Weiterleitung (z. B. eine statische Seite)
-    const targetUrl = "http://localhost:3000/index.html";
-
-    // Token vom Server generieren lassen
-    fetch("http://localhost:3000/generate-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, expiryDate, url: targetUrl }),
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.token) {
-                // URL mit Token erstellen
-                const url = `http://localhost:3000/access-link?token=${data.token}`;
-
-                // Link in der Datenbank speichern
-                fetch("http://localhost:3000/create-link", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, expiryDate, url }),
-                })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        if (data.message) {
-                            console.log(data.message);
-                            fetchLinks(); // Links erneut abrufen
-                        }
-                    })
-                    .catch((err) =>
-                        console.error("Fehler beim Erstellen des Links:", err)
-                    );
-            } else {
-                console.error("Fehler: Kein Token erhalten.");
-            }
-        })
-        .catch((err) => console.error("Fehler beim Generieren des Tokens:", err));
-
-    // Felder zurücksetzen
-    document.getElementById("link-name").value = "";
-    document.getElementById("date").value = "";
 });
 
-// Links beim Laden der Seite abrufen
-fetchLinks();
+// Add the newly created link dynamically to the UI
+function addLinkToCustomer(customerDiv, link) {
+    const customerLinks = customerDiv.querySelector(".customer-links .card");
+    const projectDiv = document.createElement("div");
+    projectDiv.classList.add("project");
+
+    projectDiv.innerHTML = `
+        <h3>${link.project_name}</h3>
+        <div class="project-link">
+            <a href="/">https:/shrinkify.de/${link.project_name}/...</a>
+            <span class="icon">delete</span>
+        </div>
+    `;
+
+    customerLinks.appendChild(projectDiv);
+}

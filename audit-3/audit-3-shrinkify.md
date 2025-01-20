@@ -34,7 +34,7 @@ Um die Flexibilität zu erhöhen, soll der Service auch das Hochladen von Dateie
 
 ### Was wird benötigt?  
 - **Technologien:**  
-  - **Cloud-Dienst-APIs:** Nutzung der APIs von OneDrive, Dropbox, Google Drive, um den Datei-Upload zu ermöglichen.  
+  - **Cloud-Dienst-APIs:** Nutzung der APIs von Dropbox und Google Drive, um den Datei-Upload zu ermöglichen.  
   - **OAuth2:** Für die Authentifizierung und die sichere Verbindung mit Cloud-Diensten.  
   - **Backend:** Node.js, Python oder ein anderes Framework zur Integration der Cloud-Dienste.  
 
