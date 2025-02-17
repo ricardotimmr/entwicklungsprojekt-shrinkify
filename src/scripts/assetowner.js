@@ -38,6 +38,14 @@ document.addEventListener("DOMContentLoaded", function () {
       images.forEach((image) => {
         const fileName = image.file_path.split('/').pop(); // Extrahiere den Dateinamen aus dem Pfad
         console.log('File name:', fileName);  // Debugging: Überprüfe den Dateinamen
+        // Zeitpunkt des Uploads nur mit Tag und Jahr anzeigen
+        const timestamp = new Date(image.uploaded_at);
+        const day = timestamp.getDate().toString().padStart(2, "0"); // Tag mit führender Null
+        const month = timestamp.getMonth().toString().padStart(2, "0"); // Monat mit führender Null
+        const year = timestamp.getFullYear();
+
+        // Formatierter Zeitstempel (DD/YYYY)
+        const formattedTime = `${day}.${month}.${year}`;
 
         const listItem = document.createElement("li");
         listItem.className = "file-item";
@@ -46,19 +54,19 @@ document.addEventListener("DOMContentLoaded", function () {
             <img class="prev-pic" src="${image.file_path}" alt="preview">
             <p class="filename">${fileName}</p>  <!-- Zeige den Dateinamen an -->
           </div>
-          <p class="timestamp">${image.uploaded_at}</p>
+          <p class="timestamp">${formattedTime}</p>
           <div class="file-actions">
-            <span class="icon close">close</span>
+            <span class="icon close hidden">close</span>
             <span class="icon delete">delete</span>
             <span class="icon download">download</span>
           </div>
-          <div class="file-progress">
+          <div class="file-progress hidden">
             <div class="progress-container">
               <div class="progress-bar"></div>
             </div>
           </div>
         `;
-        fileListToday.appendChild(listItem);        
+        fileListToday.appendChild(listItem);  
 
         const deleteIcon = listItem.querySelector(".icon.delete");
         if (deleteIcon) {
