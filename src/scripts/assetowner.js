@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
   browseButton.addEventListener("click", function () {
     fileInput.click();
   });
-  
+
   // Lade Bilder aus der Datenbank und zeige sie in der Liste an
   fetch("http://localhost:3000/images")
     .then((response) => response.json())
@@ -36,8 +36,8 @@ document.addEventListener("DOMContentLoaded", function () {
       fileListToday.innerHTML = "";
 
       images.forEach((image) => {
-        const fileName = image.file_path.split('/').pop(); // Extrahiere den Dateinamen aus dem Pfad
-        console.log('File name:', fileName);  // Debugging: Überprüfe den Dateinamen
+        const fileName = image.file_path.split("/").pop(); // Extrahiere den Dateinamen aus dem Pfad
+        console.log("File name:", fileName); // Debugging: Überprüfe den Dateinamen
         // Zeitpunkt des Uploads nur mit Tag und Jahr anzeigen
         const timestamp = new Date(image.uploaded_at);
         const day = timestamp.getDate().toString().padStart(2, "0"); // Tag mit führender Null
@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
           </div>
         `;
-        fileListToday.appendChild(listItem);  
+        fileListToday.appendChild(listItem);
 
         const deleteIcon = listItem.querySelector(".icon.delete");
         if (deleteIcon) {
@@ -107,11 +107,28 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(a);
           });
         }
+
+        // Download-Button für die geladenen Bilder aktivieren
+        const downloadAllButton = document.querySelector(".download-all");
+        if (!downloadAllButton) {
+          console.error("Element mit der Klasse .download-all nicht gefunden");
+        } else if (downloadAllButton) {
+          downloadAllButton.addEventListener("click", () => {
+            console.log("Download für aktuelle Bilder angefordert");
+
+            images.forEach((image) => {
+              const a = document.createElement("a");
+              a.href = image.file_path;
+              a.download = image.file_path.split("/").pop();
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            });
+          });
+        }
       });
     })
-    .catch((error) =>
-      console.error("Fehler beim Abrufen der Bilder:", error)
-    );
+    .catch((error) => console.error("Fehler beim Abrufen der Bilder:", error));
 
   // Starte Upload automatisch nach Auswahl der Dateien
   fileInput.addEventListener("change", async function () {
