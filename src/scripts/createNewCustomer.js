@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Fetch and display customers from the database
 function loadCustomers() {
-    fetch("/customers")
+    fetch(`http://localhost:3000/customers?timestamp=${Date.now()}`)
         .then(response => response.json())
         .then(customers => {
             const customerList = document.querySelector(".customer-list");

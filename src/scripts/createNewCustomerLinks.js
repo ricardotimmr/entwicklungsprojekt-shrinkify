@@ -73,10 +73,11 @@ function closeNewLinkForm() {
 function loadCustomerCards(customerId) {
     console.log(`Loading cards for customer ${customerId}`); // Debugging
 
+
     fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return response.json();
         })

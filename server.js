@@ -30,7 +30,7 @@ const upload = multer({
 });
 
 // Statische Dateien bereitstellen
-app.use(express.static(path.join(__dirname, "static")));
+app.use(express.static(path.join(__dirname, "src")));
 
 // Upload-Route
 app.post("/upload", upload.single("file"), (req, res) => {
