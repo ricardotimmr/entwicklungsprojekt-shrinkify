@@ -31,23 +31,44 @@ header {
         gap: var(--xs);
         color: var( --color-purple-dark);
 
-        a {
-            text-decoration: none;
-            color: inherit;
+        .search-bar {
+            position: relative;
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding: 8px;
+            align-items: center;
             background: var(--color-purple);
             border-radius: 5px;
-
-            p {
-                font-weight: var(--fw-bold);
+            padding: 8px;
+            width: 250px;
+        
+            input {
+                all: unset;
+                width: 100%;
+                background: transparent;
                 font-size: var(--fs-m);
-                margin: 0;
+                font-weight: var(--fw-bold);
+                color: var(--color-white);
+                padding-right: 30px; /* Space for the icon */
+        
+                &::placeholder {
+                    color: var(--color-purple-dark);
+                    font-weight: var(--fw-bold);
+                }
+        
+                &:focus + .icon,
+                &:not(:placeholder-shown) + .icon {
+                    opacity: 0;
+                }
+            }
+        
+            .icon {
+                position: absolute;
+                right: 10px;
+                color: var(--color-purple-dark);
+                font-size: var(--fs-l);
+                transition: opacity 0.3s ease;
             }
         }
-
+        
         button {
             all:unset;
             text-decoration: none;
@@ -205,6 +226,20 @@ header {
 }
 
 
+/* Add blur effect to the background */
+body.blur-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+}
+
+/* New Customer Form */
 #new-customer-form {
     display: none;
     position: fixed;
@@ -212,48 +247,59 @@ header {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: var(--l);
-    background-color: var(--color-grey);
+    padding-top: var(--xl);
+    background: linear-gradient(
+    135deg,
+    var(--color-fade-blue),
+    var(--color-fade-purple)
+    );
     border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 350px;
     z-index: 1000;
+    text-align: center;
 
     input {
-        width: 100%;
-        padding: 8px;
+        width: 80%;
+        padding: 12px;
         margin-bottom: var(--s);
-        font-size: var(--fs-s);
-        border-radius: 5px;
-        background-color: var(--color-purple-light);
-    }
-
-    input::placeholder {
-        color: var(--color-grey);
-    }
-
-    button {
-        width: 100%;
-        padding: 10px;
+        font-size: var(--fs-m);
+        border-radius: 8px;
         background-color: var(--color-purple);
-        color: white;
+        color: var(--color-purple-dark);
+        border: none;
+
+        &::placeholder {
+            color: var(--color-purple-dark);
+        }
+    }
+
+    #submit-customer {
+        width: 87%;
+        padding: 12px;
+        background-color: var(--color-purple);
+        color: var(--color-purple-dark);
         font-size: var(--fs-m);
         font-weight: var(--fw-bold);
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
+        transition: background 0.3s ease;
 
         &:hover {
-            background-color: var(--color-purple-dark);
+            background-color: var(--color-red);
         }
     }
 
     .close-btn {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 12px;
+        right: 12px;
         font-size: var(--fs-xl);
-        color: var(--color-grey);
+        color: var(--color-red);
         cursor: pointer;
+        font-weight: var(--fw-medium);
+        transition: color 0.3s ease;
 
         &:hover {
             color: var(--color-red);
