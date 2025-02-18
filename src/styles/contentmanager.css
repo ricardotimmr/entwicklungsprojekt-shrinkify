@@ -31,23 +31,44 @@ header {
         gap: var(--xs);
         color: var( --color-purple-dark);
 
-        a {
-            text-decoration: none;
-            color: inherit;
+        .search-bar {
+            position: relative;
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding: 8px;
+            align-items: center;
             background: var(--color-purple);
             border-radius: 5px;
-
-            p {
-                font-weight: var(--fw-bold);
+            padding: 8px;
+            width: 250px;
+        
+            input {
+                all: unset;
+                width: 100%;
+                background: transparent;
                 font-size: var(--fs-m);
-                margin: 0;
+                font-weight: var(--fw-bold);
+                color: var(--color-white);
+                padding-right: 30px; /* Space for the icon */
+        
+                &::placeholder {
+                    color: var(--color-purple-dark);
+                    font-weight: var(--fw-bold);
+                }
+        
+                &:focus + .icon,
+                &:not(:placeholder-shown) + .icon {
+                    opacity: 0;
+                }
+            }
+        
+            .icon {
+                position: absolute;
+                right: 10px;
+                color: var(--color-purple-dark);
+                font-size: var(--fs-l);
+                transition: opacity 0.3s ease;
             }
         }
-
+        
         button {
             all:unset;
             text-decoration: none;

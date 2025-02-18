@@ -47,7 +47,29 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch(error => console.error("Error:", error));
     });
+
+    const searchInput = document.getElementById("customer-search");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterCustomers);
+    }
 });
+
+// Function to filter customers
+function filterCustomers() {
+    const searchValue = document.getElementById("customer-search").value.toLowerCase();
+    const customers = document.querySelectorAll(".customer");
+
+    customers.forEach(customer => {
+        const customerName = customer.querySelector(".customer-button").textContent.toLowerCase();
+        
+        if (customerName.includes(searchValue)) {
+            customer.style.display = "grid"; // Show matching customers
+        } else {
+            customer.style.display = "none"; // Hide non-matching customers
+        }
+    });
+}
 
 // Fetch and display customers from the database
 function loadCustomers() {
@@ -91,9 +113,11 @@ function addCustomerToList(customer) {
     loadCustomerCards(customer.id);
 }
 
-// Reset the new customer form
 function resetCustomerForm() {
     document.getElementById("customer-name").value = "";
     document.getElementById("customer-email").value = "";
     document.getElementById("new-customer-form").style.display = "none";
+
+    // Remove the blur effect from the body
+    document.body.classList.remove("blur-active");
 }
