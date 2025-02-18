@@ -140,18 +140,37 @@ app.get('/customers/:customerId/cards', (req, res) => {
 // Update card details
 app.patch('/cards/:cardId', (req, res) => {
     const { cardId } = req.params;
-    const { name, fileFormat, maxFileSize, compressionLevel, expirationDate, url } = req.body;
+    const { file_format, max_file_size, compression_level, expiration_date } = req.body;
 
-    const query = `UPDATE customer_links SET 
-                   name = COALESCE(?, name),
-                   file_format = COALESCE(?, file_format),
-                   max_file_size = COALESCE(?, max_file_size),
-                   compression_level = COALESCE(?, compressionLevel),
-                   expiration_date = COALESCE(?, expiration_date),
-                   url = COALESCE(?, url)
-                   WHERE id = ?`;
+    let updateFields = [];
+    let values = [];
 
-    db.run(query, [name, fileFormat, maxFileSize, compressionLevel, expirationDate, url, cardId], function (err) {
+    if (file_format !== undefined) {
+        updateFields.push("file_format = ?");
+        values.push(file_format);
+    }
+    if (max_file_size !== undefined) {
+        updateFields.push("max_file_size = ?");
+        values.push(max_file_size);
+    }
+    if (compression_level !== undefined) {
+        updateFields.push("compression_level = ?");
+        values.push(compression_level);
+    }
+    if (expiration_date !== undefined) {
+        updateFields.push("expiration_date = ?");
+        values.push(expiration_date);
+    }
+
+    if (updateFields.length === 0) {
+        return res.status(400).json({ success: false, message: "Keine gültigen Felder zum Aktualisieren." });
+    }
+
+    values.push(cardId); // Card ID als letztes Argument für das WHERE-Statement
+
+    const query = `UPDATE customer_links SET ${updateFields.join(", ")} WHERE id = ?`;
+
+    db.run(query, values, function (err) {
         if (err) {
             console.error("Fehler beim Aktualisieren der Karte:", err.message);
             return res.status(500).json({ success: false, message: "Fehler beim Aktualisieren der Karte." });
@@ -166,6 +185,7 @@ app.patch('/cards/:cardId', (req, res) => {
     });
 });
 
+
 // Delete a card
 app.delete('/cards/:cardId', (req, res) => {
     const { cardId } = req.params;
@@ -178,6 +198,7 @@ app.delete('/cards/:cardId', (req, res) => {
         res.status(200).json({ success: true, message: "Karte erfolgreich gelöscht." });
     });
 });
+
 
 // Server starten
 app.listen(port, () => {

@@ -73,19 +73,24 @@ function filterCustomers() {
 
 // Fetch and display customers from the database
 function loadCustomers() {
-    fetch(`http://localhost:3000/customers?timestamp=${Date.now()}`) // Cache-busting
+    fetch(`http://localhost:3000/customers?timestamp=${Date.now()}`)
         .then(response => response.json())
         .then(customers => {
             const customerList = document.querySelector(".customer-list");
-            customerList.innerHTML = "";
+            customerList.innerHTML = ""; // Clear existing list
+
             customers.forEach(customer => {
                 addCustomerToList(customer);
-                // Now load cards for this customer
+            });
+
+            // Karten erst nach dem Rendern der Kunden laden
+            customers.forEach(customer => {
                 loadCustomerCards(customer.id);
             });
         })
-        .catch(error => console.error("Error loading customers:", error));
+        .catch(error => console.error("Fehler beim Laden der Kunden:", error));
 }
+
 
 // Add a new customer to the UI dynamically
 function addCustomerToList(customer) {
@@ -117,7 +122,7 @@ function resetCustomerForm() {
     document.getElementById("customer-name").value = "";
     document.getElementById("customer-email").value = "";
     document.getElementById("new-customer-form").style.display = "none";
-
+  
     // Remove the blur effect from the body
     document.body.classList.remove("blur-active");
 }

@@ -192,6 +192,12 @@ header {
             .setting-1, .setting-2, .setting-3 {
                 display: flex;
                 flex-direction: column;
+
+                .edate.expired {
+                    background-color: #AD2F2F !important;
+                    font-weight: bold;
+                }
+                
             }
         }
     }

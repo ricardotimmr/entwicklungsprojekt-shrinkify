@@ -73,7 +73,8 @@ function closeNewLinkForm() {
 function loadCustomerCards(customerId) {
     console.log(`Loading cards for customer ${customerId}`); // Debugging
 
-    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`) // Cache-busting
+
+    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -82,21 +83,142 @@ function loadCustomerCards(customerId) {
         })
         .then(data => {
             console.log("Received cards:", data); // Debugging
-            if (data.success) {
-                const customerLinks = document.querySelector(`.customer[data-id='${customerId}'] .customer-links`);
-                customerLinks.innerHTML = ""; // Clear previous cards
-                data.cards.forEach(card => addCardToCustomer(card, customerId));
-            } else {
-                console.error("Fehler beim Laden der Karten:", data.message);
+
+            const customerElement = document.querySelector(`.customer[data-id='${customerId}']`);
+            if (!customerElement) {
+                console.warn(`Kein Kunden-Element für ID ${customerId} gefunden. Überspringe.`);
+                return; // Fehler abfangen, aber Script nicht crashen lassen
             }
+
+            const customerLinks = customerElement.querySelector(".customer-links");
+            if (!customerLinks) {
+                console.warn(`Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`);
+                return;
+            }
+
+            customerLinks.innerHTML = ""; // Vorherige Karten entfernen
+            data.cards.forEach(card => addCardToCustomer(card, customerId));
         })
         .catch(err => console.error("Fehler beim Laden der Karten:", err));
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Initial load of cards for all customers
+    const customers = document.querySelectorAll(".customer");
+    customers.forEach(customer => {
+        const customerId = customer.dataset.id;
+        if (customerId) {
+            loadCustomerCards(customerId);
+        }
+    });
+
+    // Event-Listener für alle Eingabefelder hinzufügen
+    document.addEventListener("change", (event) => {
+        const target = event.target;
+        if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+            updateCardSettings(target);
+        }
+    });
+});
+
+// Funktion zum Aktualisieren der Karten-Einstellungen
+function updateCardSettings(input) {
+    const cardId = input.dataset.cardId;
+    let fieldName = input.name;
+    let value = input.value;
+
+    // Mappe die HTML-Namen auf die Datenbank-Felder
+    const fieldMapping = {
+        "fformat": "file_format",
+        "fsize": "max_file_size",
+        "dcompression": "compression_level",
+        "edate": "expiration_date"
+    };
+
+    // Falls das Feld im Mapping ist, ersetze es
+    if (fieldMapping[fieldName]) {
+        fieldName = fieldMapping[fieldName];
+    }
+
+    // Konvertiere spezielle Werte
+    if (fieldName === "compression_level" && !value.includes("%")) {
+        value += "%";
+    } else if (fieldName === "max_file_size" && !value.toLowerCase().includes("mb")) {
+        value += " MB";
+    }
+
+    console.log(`Updating ${fieldName} for card ${cardId} with value: ${value}`); // Debugging
+
+    fetch(`/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [fieldName]: value }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error("Fehler beim Speichern der Änderungen:", data.message);
+            alert("Fehler beim Speichern der Änderungen.");
+        }
+    })
+    .catch(error => console.error("Fehler beim Aktualisieren der Karte:", error));
+}
+
+//Card löschen
+function deleteCard(cardId) {
+    if (!confirm("Möchtest du diese Karte wirklich löschen?")) return;
+
+    fetch(`/cards/${cardId}`, {
+        method: "DELETE",
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Entferne die Karte aus dem DOM
+            document.querySelector(`.card[data-id='${cardId}']`).remove();
+        } else {
+            alert("Fehler beim Löschen der Karte: " + data.message);
+        }
+    })
+    .catch(err => console.error("Fehler beim Löschen der Karte:", err));
+}
+
+document.addEventListener("change", (event) => {
+    const target = event.target;
+    
+    // Prüfe, ob das geänderte Feld ein Ablaufdatum ist
+    if (target.matches(".edate")) {
+        const expirationDate = new Date(target.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
+        
+        if (expirationDate < today) {
+            target.classList.add("expired");
+        } else {
+            target.classList.remove("expired");
+        }
+    }
+
+    if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+        updateCardSettings(target);
+    }
+});
+
+
+
 
 // Add a new card to the UI dynamically
 function addCardToCustomer(card, customerId) {
     const customer = document.querySelector(`.customer[data-id='${customerId}']`);
     const customerLinks = customer.querySelector(".customer-links");
+
+    // Ablaufdatum als Date-Objekt erstellen
+    const expirationDate = new Date(card.expiration_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
+
+    const isExpired = expirationDate < today;
 
     const cardHTML = `
         <div class="card" data-id="${card.id}">
@@ -104,7 +226,7 @@ function addCardToCustomer(card, customerId) {
                 <h3>${card.name}</h3>
                 <div class="project-link">
                     <a href="${card.url || '#'}">${card.url || 'Keine URL angegeben'}</a>
-                    <span class="icon">delete</span>
+                    <span class="icon delete-card" data-card-id="${card.id}">delete</span> 
                 </div>
             </div>
             <div class="settings">
@@ -123,11 +245,24 @@ function addCardToCustomer(card, customerId) {
                  </form>
                  <form class="setting-3">
                     <label for="edate">Ablaufdatum des Links</label>
-                    <input type="date" value="${card.expiration_date || ''}" class="edate" name="edate" data-card-id="${card.id}">
+                    <input type="date" value="${card.expiration_date || ''}" class="edate ${isExpired ? 'expired' : ''}" name="edate" data-card-id="${card.id}">
                 </form>
             </div>
         </div>
     `;
 
     customerLinks.insertAdjacentHTML("beforeend", cardHTML);
+
+    // Ablaufdatum-Feld nachträglich mit Klasse "expired" versehen
+    const inputField = customerLinks.querySelector(`.edate[data-card-id="${card.id}"]`);
+    if (isExpired) {
+        inputField.classList.add("expired");
+    } else {
+        inputField.classList.remove("expired");
+    }
+
+    // Event-Listener zum Löschen der Karte hinzufügen
+    const deleteButton = customerLinks.querySelector(`.delete-card[data-card-id='${card.id}']`);
+    deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
+
