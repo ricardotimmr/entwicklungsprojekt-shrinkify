@@ -46,12 +46,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Fetch and display customers from the database
 function loadCustomers() {
-    fetch("http://localhost:3000/customers")
+    fetch(`http://localhost:3000/customers?timestamp=${Date.now()}`) // Cache-busting
         .then(response => response.json())
         .then(customers => {
             const customerList = document.querySelector(".customer-list");
             customerList.innerHTML = "";
-            customers.forEach(customer => addCustomerToList(customer));
+            customers.forEach(customer => {
+                addCustomerToList(customer);
+                // Now load cards for this customer
+                loadCustomerCards(customer.id);
+            });
         })
         .catch(error => console.error("Error loading customers:", error));
 }
@@ -62,29 +66,24 @@ function addCustomerToList(customer) {
 
     const customerDiv = document.createElement("div");
     customerDiv.classList.add("customer");
+    customerDiv.setAttribute("data-id", customer.id);
 
-    const customerHTML = `
-    <div class="customer" data-id="${customer.id}">
+    customerDiv.innerHTML = `
         <div class="customer-name">
             <button class="customer-button" onclick="toggleCard(this)">${customer.name}</button>
             <span class="icon">download</span>
         </div>
-        <div class="customer-links" style="display: none;">
-            ${(customer.cards || []).map(card => `
-                <div class="card" data-id="${card.id}">
-                    <!-- Card content here -->
-                </div>
-            `).join('')}
-        </div>
+        <div class="customer-links" style="display: none;"></div>
         <a href="javascript:void(0);" class="new-link" onclick="openNewLinkForm('${customer.id}')">
             <p>Neuer Link</p>
             <span class="icon">add</span>
         </a>
-    </div>
-`;
+    `;
 
+    customerList.appendChild(customerDiv);
 
-    customerList.insertAdjacentHTML("beforeend", customerHTML);
+    // Ensure cards load for this customer
+    loadCustomerCards(customer.id);
 }
 
 // Reset the new customer form

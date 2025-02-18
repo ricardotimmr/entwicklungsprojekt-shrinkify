@@ -71,26 +71,26 @@ function closeNewLinkForm() {
 
 // Load cards for a specific customer
 function loadCustomerCards(customerId) {
-    fetch(`/customers/${customerId}/cards`)
-        .then((response) => {
+    console.log(`Loading cards for customer ${customerId}`); // Debugging
+
+    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`) // Cache-busting
+        .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return response.json();
         })
-        .then((data) => {
+        .then(data => {
+            console.log("Received cards:", data); // Debugging
             if (data.success) {
-                const customerLinks = document.querySelector(
-                    `.customer[data-id='${customerId}'] .customer-links`
-                );
-
-                customerLinks.innerHTML = ""; // Remove old cards
-                data.cards.forEach((card) => addCardToCustomer(card, customerId));
+                const customerLinks = document.querySelector(`.customer[data-id='${customerId}'] .customer-links`);
+                customerLinks.innerHTML = ""; // Clear previous cards
+                data.cards.forEach(card => addCardToCustomer(card, customerId));
             } else {
                 console.error("Fehler beim Laden der Karten:", data.message);
             }
         })
-        .catch((err) => console.error("Fehler beim Laden der Karten:", err));
+        .catch(err => console.error("Fehler beim Laden der Karten:", err));
 }
 
 // Add a new card to the UI dynamically
