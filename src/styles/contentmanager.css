@@ -47,6 +47,27 @@ header {
                 margin: 0;
             }
         }
+
+        button {
+            all:unset;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 8px;
+            background: var(--color-purple);
+            border-radius: 5px;
+            font-weight: var(--fw-bold);
+            font-size: var(--fs-m);
+            cursor: pointer;
+
+            .icon {
+                font-size: var(--fs-l);
+                font-weight: var(--fw-bold);
+                margin-left: var(--xs);
+            }
+        }
     }
 
     .search {
@@ -67,6 +88,7 @@ header {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto 1fr;
     width: 100%;
+    margin-bottom: var(--xl);
 
     .customer-name {
         grid-row: 1 / 2;
@@ -173,5 +195,62 @@ header {
     .icon {
         font-size: var(--fs-l);
         margin-left: var(--xs);
+    }
+}
+
+
+#new-customer-form {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: var(--l);
+    background-color: var(--color-grey);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    z-index: 1000;
+
+    input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: var(--s);
+        font-size: var(--fs-s);
+        border-radius: 5px;
+        background-color: var(--color-purple-light);
+    }
+
+    input::placeholder {
+        color: var(--color-grey);
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        background-color: var(--color-purple);
+        color: white;
+        font-size: var(--fs-m);
+        font-weight: var(--fw-bold);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--color-purple-dark);
+        }
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: var(--fs-xl);
+        color: var(--color-grey);
+        cursor: pointer;
+
+        &:hover {
+            color: var(--color-red);
+        }
     }
 }
