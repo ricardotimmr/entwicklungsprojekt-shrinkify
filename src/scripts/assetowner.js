@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const browseButton = document.getElementById("browseButton");
   const toastContainer = document.getElementById("toastContainer");
   const fileListToday = document.getElementById("file-list-today");
+  const fileListOld = document.getElementById("file-list-old");
   const waitingList = document.getElementById("waiting-list");
 
   // Dropdown-Menü anzeigen/verbergen
@@ -66,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
           </div>
         `;
-        fileListToday.appendChild(listItem);
+        fileListOld.appendChild(listItem);
 
         const deleteIcon = listItem.querySelector(".icon.delete");
         if (deleteIcon) {
@@ -105,25 +106,6 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-          });
-        }
-
-        // Download-Button für die geladenen Bilder aktivieren
-        const downloadAllButton = document.querySelector(".download-all");
-        if (!downloadAllButton) {
-          console.error("Element mit der Klasse .download-all nicht gefunden");
-        } else if (downloadAllButton) {
-          downloadAllButton.addEventListener("click", () => {
-            console.log("Download für aktuelle Bilder angefordert");
-
-            images.forEach((image) => {
-              const a = document.createElement("a");
-              a.href = image.file_path;
-              a.download = image.file_path.split("/").pop();
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            });
           });
         }
       });
@@ -183,6 +165,33 @@ document.addEventListener("DOMContentLoaded", function () {
       } catch (error) {
         updateFileStatus(file.name, "Fehler beim Upload", true);
       }
+    }
+
+    // Download-Button für die geladenen Bilder aktivieren
+    const downloadAllButton = document.querySelector(".download-all");
+    if (!downloadAllButton) {
+      console.error("Element mit der Klasse .download-all nicht gefunden");
+    } else {
+      downloadAllButton.addEventListener("click", () => {
+        console.log("Download für aktuelle Bilder angefordert");
+  
+        // Konvertiere FileList in ein Array
+        const filesArray = Array.from(fileInput.files);
+  
+        if (!filesArray || filesArray.length === 0) {
+          console.error("Keine Dateien zum Herunterladen gefunden");
+          return;
+        }
+  
+        filesArray.forEach((file) => {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(file);
+          a.download = file.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+      });
     }
   });
 
