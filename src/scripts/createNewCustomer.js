@@ -1,14 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
     loadCustomers();
+
+    const form = document.getElementById("new-customer-form");
+    const body = document.body;
     
     // Show new customer form when clicking the button
     document.getElementById("new-customer-button").addEventListener("click", () => {
-        document.getElementById("new-customer-form").style.display = "block";
+        form.style.display = "block";
+        body.classList.add("blur-active");
     });
 
     // Close form when clicking the close button
     document.querySelector(".close-btn").addEventListener("click", () => {
-        document.getElementById("new-customer-form").style.display = "none";
+        form.style.display = "none";
+        body.classList.remove("blur-active");
     });
 
     // Handle form submission
