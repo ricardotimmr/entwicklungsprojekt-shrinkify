@@ -183,6 +183,27 @@ function deleteCard(cardId) {
     .catch(err => console.error("Fehler beim Löschen der Karte:", err));
 }
 
+document.addEventListener("change", (event) => {
+    const target = event.target;
+    
+    // Prüfe, ob das geänderte Feld ein Ablaufdatum ist
+    if (target.matches(".edate")) {
+        const expirationDate = new Date(target.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
+        
+        if (expirationDate < today) {
+            target.classList.add("expired");
+        } else {
+            target.classList.remove("expired");
+        }
+    }
+
+    if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+        updateCardSettings(target);
+    }
+});
+
 
 
 
@@ -190,6 +211,13 @@ function deleteCard(cardId) {
 function addCardToCustomer(card, customerId) {
     const customer = document.querySelector(`.customer[data-id='${customerId}']`);
     const customerLinks = customer.querySelector(".customer-links");
+
+    // Ablaufdatum als Date-Objekt erstellen
+    const expirationDate = new Date(card.expiration_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
+
+    const isExpired = expirationDate < today;
 
     const cardHTML = `
         <div class="card" data-id="${card.id}">
@@ -216,7 +244,7 @@ function addCardToCustomer(card, customerId) {
                  </form>
                  <form class="setting-3">
                     <label for="edate">Ablaufdatum des Links</label>
-                    <input type="date" value="${card.expiration_date || ''}" class="edate" name="edate" data-card-id="${card.id}">
+                    <input type="date" value="${card.expiration_date || ''}" class="edate ${isExpired ? 'expired' : ''}" name="edate" data-card-id="${card.id}">
                 </form>
             </div>
         </div>
@@ -224,7 +252,16 @@ function addCardToCustomer(card, customerId) {
 
     customerLinks.insertAdjacentHTML("beforeend", cardHTML);
 
-    //Event-Listener zum Löschen der Karte hinzufügen
+    // Ablaufdatum-Feld nachträglich mit Klasse "expired" versehen
+    const inputField = customerLinks.querySelector(`.edate[data-card-id="${card.id}"]`);
+    if (isExpired) {
+        inputField.classList.add("expired");
+    } else {
+        inputField.classList.remove("expired");
+    }
+
+    // Event-Listener zum Löschen der Karte hinzufügen
     const deleteButton = customerLinks.querySelector(`.delete-card[data-card-id='${card.id}']`);
     deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
+
