@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const toastContainer = document.getElementById("toastContainer");
   const fileListToday = document.getElementById("file-list-today");
   const fileListOld = document.getElementById("file-list-old");
-  const waitingList = document.getElementById("waiting-list");
 
   // Dropdown-Menü anzeigen/verbergen
   if (dropdownBtn && dropdownContent) {
@@ -129,10 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
         );
         return;
       }
-
-      // Warteschlangen-Datei hinzufügen
-      addFileToQueue(file);
-
+      
       // Datei in "Heute"-Liste hinzufügen
       const progressContainer = document.createElement("li");
       progressContainer.className = "file-item";
@@ -194,14 +190,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   });
-
-  // Funktion zum Hinzufügen von Dateien zur Warteschlange
-  function addFileToQueue(file) {
-    const listItem = document.createElement("li");
-    listItem.classList.add("dropdown-content");
-    listItem.textContent = file.name;
-    waitingList.appendChild(listItem);
-  }
 
   // Datei hochladen mit Fortschrittsanzeige
   function uploadFile(file, progressBar, progressContainer) {
@@ -346,14 +334,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Update-Status für die Datei (zeigen, ob sie erfolgreich hochgeladen wurde oder nicht)
   function updateFileStatus(fileName, status, isError = false) {
-    // Datei aus der "Warteschlange" entfernen
-    const waitingItems = document.querySelectorAll(".dropdown-content");
-    waitingItems.forEach((item) => {
-      if (item.textContent === fileName) {
-        item.remove();
-      }
-    });
-
     // Datei aus der "Heute"-Liste aktualisieren
     const items = document.querySelectorAll(".file-item");
     items.forEach((item) => {
