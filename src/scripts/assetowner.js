@@ -1,27 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const dropdownBtn = document.querySelector(".dropdown-btn");
-  const dropdownContent = document.querySelector(".dropdown-content");
   const fileInput = document.getElementById("fileInput");
   const browseButton = document.getElementById("browseButton");
   const toastContainer = document.getElementById("toastContainer");
   const fileListToday = document.getElementById("file-list-today");
   const fileListOld = document.getElementById("file-list-old");
+  const startUploadButton = document.getElementById("start-upload");
 
-  // Dropdown-Menü anzeigen/verbergen
-  if (dropdownBtn && dropdownContent) {
-    dropdownBtn.addEventListener("click", function () {
-      dropdownContent.classList.toggle("show");
-    });
-
-    document.addEventListener("click", function (event) {
-      if (
-        !dropdownBtn.contains(event.target) &&
-        !dropdownContent.contains(event.target)
-      ) {
-        dropdownContent.classList.remove("show");
-      }
-    });
-  }
+  let filesToUpload = [];
 
   // Datei-Auswahl per Klick öffnen
   browseButton.addEventListener("click", function () {
@@ -115,20 +100,19 @@ document.addEventListener("DOMContentLoaded", function () {
   fileInput.addEventListener("change", async function () {
     const files = fileInput.files;
     if (!files.length) {
-      showToast("Bitte eine oder mehrere Dateien auswählen.", "error");
+      console.error("Bitte eine oder mehrere Dateien auswählen.");
       return;
     }
 
     // Für jede Datei, die hochgeladen wird
     for (const file of files) {
       if (file.size > 50 * 1024 * 1024) {
-        showToast(
-          `Die Datei ${file.name} ist zu groß. Maximal 50 MB erlaubt.`,
-          "error"
-        );
+        console.error(`Die Datei ${file.name} ist zu groß. Maximal 50 MB erlaubt.`);
         return;
       }
-      
+
+      filesToUpload.push(file);
+
       // Datei in "Heute"-Liste hinzufügen
       const progressContainer = document.createElement("li");
       progressContainer.className = "file-item";
@@ -137,11 +121,11 @@ document.addEventListener("DOMContentLoaded", function () {
             <img class="prev-pic" alt="preview"> <!-- Kein src gesetzt -->
             <p class="filename">${file.name}</p>
         </div>
-        <p class="timestamp">Datei wird hochgeladen...</p>
+        <p class="timestamp">Ausstehend</p>
         <div class="file-actions">
             <span class="icon close">close</span>
-            <span class="icon delete">delete</span>
-            <span class="icon download">download</span>
+            <span class="icon delete inactive">delete</span>
+            <span class="icon download inactive">download</span>
         </div>
         <div class="file-progress">
             <div class="progress-container">
@@ -151,6 +135,28 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
 
       fileListToday.appendChild(progressContainer);
+
+      // Close-Icon Funktion hinzufügen
+      const closeIcon = progressContainer.querySelector(".icon.close");
+      if (closeIcon) {
+        closeIcon.addEventListener("click", () => {
+          filesToUpload = filesToUpload.filter(f => f !== file);
+          progressContainer.remove();
+          console.log(`Die Datei ${file.name} wurde entfernt.`);
+        });
+      }
+    }
+  });
+
+  startUploadButton.addEventListener("click", async () => {
+    for (const file of filesToUpload) {
+      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
+        .find(item => item.querySelector(".filename").textContent === file.name);
+
+      if (!progressContainer) {
+        console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
+        continue;
+      }
 
       const progressBar = progressContainer.querySelector(".progress-bar");
 
@@ -162,34 +168,34 @@ document.addEventListener("DOMContentLoaded", function () {
         updateFileStatus(file.name, "Fehler beim Upload", true);
       }
     }
-
-    // Download-Button für die geladenen Bilder aktivieren
-    const downloadAllButton = document.querySelector(".download-all");
-    if (!downloadAllButton) {
-      console.error("Element mit der Klasse .download-all nicht gefunden");
-    } else {
-      downloadAllButton.addEventListener("click", () => {
-        console.log("Download für aktuelle Bilder angefordert");
-  
-        // Konvertiere FileList in ein Array
-        const filesArray = Array.from(fileInput.files);
-  
-        if (!filesArray || filesArray.length === 0) {
-          console.error("Keine Dateien zum Herunterladen gefunden");
-          return;
-        }
-  
-        filesArray.forEach((file) => {
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(file);
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        });
-      });
-    }
   });
+
+  // Download-Button für die geladenen Bilder aktivieren
+  const downloadAllButton = document.querySelector(".download-all");
+  if (!downloadAllButton) {
+    console.error("Element mit der Klasse .download-all nicht gefunden");
+  } else {
+    downloadAllButton.addEventListener("click", () => {
+      console.log("Download für aktuelle Bilder angefordert");
+
+      // Konvertiere FileList in ein Array
+      const filesArray = Array.from(fileInput.files);
+
+      if (!filesArray || filesArray.length === 0) {
+        console.error("Keine Dateien zum Herunterladen gefunden");
+        return;
+      }
+
+      filesArray.forEach((file) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    });
+  }
 
   // Datei hochladen mit Fortschrittsanzeige
   function uploadFile(file, progressBar, progressContainer) {
@@ -199,6 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
+          progressContainer.querySelector(".timestamp").textContent = "Datei wird geladen...";
           const percentComplete = (event.loaded / event.total) * 100;
           progressBar.style.width = `${percentComplete}%`;
 
@@ -227,6 +234,14 @@ document.addEventListener("DOMContentLoaded", function () {
               const closeIcon = progressContainer.querySelector(".icon.close");
               if (closeIcon) {
                 closeIcon.style.display = "none"; // Close-Icon ausblenden
+              }
+
+              // Download- und Delete-Icon aktivieren
+              const deleteIcon = progressContainer.querySelector(".icon.delete");
+              const downloadIcon = progressContainer.querySelector(".icon.download");
+              if (deleteIcon && downloadIcon) {
+                deleteIcon.classList.remove("inactive"); // Delete-Icon aktivieren
+                downloadIcon.classList.remove("inactive"); // Download-Icon aktivieren
               }
             }, 500); // Warten Sie, bis die Fortschrittsanzeige auf 100% steht
           }
