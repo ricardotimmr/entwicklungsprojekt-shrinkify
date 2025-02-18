@@ -71,27 +71,103 @@ function closeNewLinkForm() {
 
 // Load cards for a specific customer
 function loadCustomerCards(customerId) {
-    fetch(`/customers/${customerId}/cards`)
-        .then((response) => {
+    console.log(`Loading cards for customer ${customerId}`); // Debugging
+
+    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`) // Cache-busting
+        .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP-Fehler! Status: ${response.status}`);
             }
             return response.json();
         })
-        .then((data) => {
+        .then(data => {
+            console.log("Received cards:", data); // Debugging
             if (data.success) {
-                const customerLinks = document.querySelector(
-                    `.customer[data-id='${customerId}'] .customer-links`
-                );
+                const customerElement = document.querySelector(`.customer[data-id='${customerId}']`);
+                if (!customerElement) {
+                    console.error(`Kein Kunden-Element für ID ${customerId} gefunden.`);
+                    return;
+                }
 
-                customerLinks.innerHTML = ""; // Remove old cards
-                data.cards.forEach((card) => addCardToCustomer(card, customerId));
+                const customerLinks = customerElement.querySelector(".customer-links");
+                if (!customerLinks) {
+                    console.error(`Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`);
+                    return;
+                }
+
+                customerLinks.innerHTML = ""; // Clear previous cards
+                data.cards.forEach(card => addCardToCustomer(card, customerId));
             } else {
                 console.error("Fehler beim Laden der Karten:", data.message);
             }
         })
-        .catch((err) => console.error("Fehler beim Laden der Karten:", err));
+        .catch(err => console.error("Fehler beim Laden der Karten:", err));
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Initial load of cards for all customers
+    const customers = document.querySelectorAll(".customer");
+    customers.forEach(customer => {
+        const customerId = customer.dataset.id;
+        if (customerId) {
+            loadCustomerCards(customerId);
+        }
+    });
+
+    // Event-Listener für alle Eingabefelder hinzufügen
+    document.addEventListener("change", (event) => {
+        const target = event.target;
+        if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+            updateCardSettings(target);
+        }
+    });
+});
+
+// Funktion zum Aktualisieren der Karten-Einstellungen
+function updateCardSettings(input) {
+    const cardId = input.dataset.cardId;
+    let fieldName = input.name;
+    let value = input.value;
+
+    // Mappe die HTML-Namen auf die Datenbank-Felder
+    const fieldMapping = {
+        "fformat": "file_format",
+        "fsize": "max_file_size",
+        "dcompression": "compression_level",
+        "edate": "expiration_date"
+    };
+
+    // Falls das Feld im Mapping ist, ersetze es
+    if (fieldMapping[fieldName]) {
+        fieldName = fieldMapping[fieldName];
+    }
+
+    // Konvertiere spezielle Werte
+    if (fieldName === "compression_level" && !value.includes("%")) {
+        value += "%";
+    } else if (fieldName === "max_file_size" && !value.toLowerCase().includes("mb")) {
+        value += " MB";
+    }
+
+    console.log(`Updating ${fieldName} for card ${cardId} with value: ${value}`); // Debugging
+
+    fetch(`/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [fieldName]: value }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error("Fehler beim Speichern der Änderungen:", data.message);
+            alert("Fehler beim Speichern der Änderungen.");
+        }
+    })
+    .catch(error => console.error("Fehler beim Aktualisieren der Karte:", error));
+}
+
+
+
 
 // Add a new card to the UI dynamically
 function addCardToCustomer(card, customerId) {
