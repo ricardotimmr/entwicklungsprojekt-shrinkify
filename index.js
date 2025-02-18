@@ -199,6 +199,7 @@ app.delete('/cards/:cardId', (req, res) => {
     });
 });
 
+
 // Server starten
 app.listen(port, () => {
   console.log(`Server läuft unter http://localhost:${port}`);

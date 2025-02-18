@@ -73,7 +73,7 @@ function closeNewLinkForm() {
 function loadCustomerCards(customerId) {
     console.log(`Loading cards for customer ${customerId}`); // Debugging
 
-    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`) // Cache-busting
+    fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP-Fehler! Status: ${response.status}`);
@@ -82,27 +82,25 @@ function loadCustomerCards(customerId) {
         })
         .then(data => {
             console.log("Received cards:", data); // Debugging
-            if (data.success) {
-                const customerElement = document.querySelector(`.customer[data-id='${customerId}']`);
-                if (!customerElement) {
-                    console.error(`Kein Kunden-Element für ID ${customerId} gefunden.`);
-                    return;
-                }
 
-                const customerLinks = customerElement.querySelector(".customer-links");
-                if (!customerLinks) {
-                    console.error(`Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`);
-                    return;
-                }
-
-                customerLinks.innerHTML = ""; // Clear previous cards
-                data.cards.forEach(card => addCardToCustomer(card, customerId));
-            } else {
-                console.error("Fehler beim Laden der Karten:", data.message);
+            const customerElement = document.querySelector(`.customer[data-id='${customerId}']`);
+            if (!customerElement) {
+                console.warn(`Kein Kunden-Element für ID ${customerId} gefunden. Überspringe.`);
+                return; // Fehler abfangen, aber Script nicht crashen lassen
             }
+
+            const customerLinks = customerElement.querySelector(".customer-links");
+            if (!customerLinks) {
+                console.warn(`Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`);
+                return;
+            }
+
+            customerLinks.innerHTML = ""; // Vorherige Karten entfernen
+            data.cards.forEach(card => addCardToCustomer(card, customerId));
         })
         .catch(err => console.error("Fehler beim Laden der Karten:", err));
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial load of cards for all customers
@@ -166,6 +164,25 @@ function updateCardSettings(input) {
     .catch(error => console.error("Fehler beim Aktualisieren der Karte:", error));
 }
 
+//Card löschen
+function deleteCard(cardId) {
+    if (!confirm("Möchtest du diese Karte wirklich löschen?")) return;
+
+    fetch(`/cards/${cardId}`, {
+        method: "DELETE",
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Entferne die Karte aus dem DOM
+            document.querySelector(`.card[data-id='${cardId}']`).remove();
+        } else {
+            alert("Fehler beim Löschen der Karte: " + data.message);
+        }
+    })
+    .catch(err => console.error("Fehler beim Löschen der Karte:", err));
+}
+
 
 
 
@@ -180,7 +197,7 @@ function addCardToCustomer(card, customerId) {
                 <h3>${card.name}</h3>
                 <div class="project-link">
                     <a href="${card.url || '#'}">${card.url || 'Keine URL angegeben'}</a>
-                    <span class="icon">delete</span>
+                    <span class="icon delete-card" data-card-id="${card.id}">delete</span> 
                 </div>
             </div>
             <div class="settings">
@@ -206,4 +223,8 @@ function addCardToCustomer(card, customerId) {
     `;
 
     customerLinks.insertAdjacentHTML("beforeend", cardHTML);
+
+    //Event-Listener zum Löschen der Karte hinzufügen
+    const deleteButton = customerLinks.querySelector(`.delete-card[data-card-id='${card.id}']`);
+    deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
