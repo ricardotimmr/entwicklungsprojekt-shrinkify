@@ -8,6 +8,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let filesToUpload = [];
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+
+    if (!token) {
+        alert("Ungültiger Zugriff. Kein Token gefunden.");
+        return;
+    }
+
+    // Token an den Server zur Validierung senden
+    fetch(`/validate-token?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.valid) {
+                alert("Ungültiger oder abgelaufener Link.");
+                window.location.href = "/"; // Umleitung zur Startseite
+            } else {
+                console.log("Token ist gültig. Daten:", data);
+                // Hier kannst du spezifische Daten für den Asset Owner laden
+            }
+        })
+        .catch(err => {
+            console.error("Fehler bei der Token-Validierung:", err);
+            alert("Fehler bei der Token-Überprüfung.");
+        });
+
   // Datei-Auswahl per Klick öffnen
   browseButton.addEventListener("click", function () {
     fileInput.click();

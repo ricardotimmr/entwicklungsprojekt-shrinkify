@@ -4,6 +4,10 @@ const multer = require("multer");
 const sharp = require("sharp");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
+
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = "your-secret-key";
 
 const app = express();
 const port = 3000;
@@ -19,9 +23,6 @@ app.use("/src/html", express.static(path.join(__dirname, "/src/html")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "/src/index.html"));
 });
-
-
-const fs = require("fs");
 
 // Verbindet mit der SQLite-Datenbank (die Datei wird automatisch erstellt, wenn sie nicht existiert)
 const db = new sqlite3.Database("./database.db", (err) => {
@@ -70,6 +71,21 @@ db.serialize(() => {
         uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     `);
+});
+
+app.get("/validate-token", (req, res) => {
+    const { token } = req.query;
+
+    if (!token) {
+        return res.status(400).json({ valid: false, message: "Token fehlt." });
+    }
+
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        res.status(200).json({ valid: true, data: decoded });
+    } catch (err) {
+        res.status(401).json({ valid: false, message: "Ungültiger oder abgelaufener Token." });
+    }
 });
 
 // Ordner für Uploads und komprimierte Bilder sicherstellen
@@ -178,6 +194,7 @@ app.post('/cards', (req, res) => {
         });
     }
 
+    // Zuerst die Karte ohne URL erstellen
     const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, url) 
                    VALUES (?, ?, ?, ?, ?, ?, NULL)`;
 
@@ -187,11 +204,36 @@ app.post('/cards', (req, res) => {
             return res.status(500).json({ success: false, message: "Fehler beim Hinzufügen der Karte." });
         }
 
-        db.get(`SELECT * FROM customer_links WHERE id = ?`, [this.lastID], (err, row) => {
-            if (err) {
-                return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
+        const cardId = this.lastID;
+
+        // Token generieren
+        const payload = { cardId, customerId };
+        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '7d' }); // Token läuft in 7 Tagen ab
+
+        // Erstelle personalisierten Link
+        const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
+
+        // Update der Karte mit dem Link
+        db.run(`UPDATE customer_links SET url = ? WHERE id = ?`, [personalizedLink, cardId], (updateErr) => {
+            if (updateErr) {
+                console.error("Fehler beim Speichern des Links:", updateErr.message);
+                return res.status(500).json({ success: false, message: "Fehler beim Speichern des Links." });
             }
-            res.status(201).json({ success: true, card: row });
+
+            // Rückgabe der Karte mit dem Link
+            res.status(201).json({
+                success: true,
+                card: {
+                    id: cardId,
+                    customer_id: customerId,
+                    name,
+                    file_format: fileFormat,
+                    max_file_size: maxFileSize,
+                    compression_level: compressionLevel,
+                    expiration_date: expirationDate,
+                    url: personalizedLink
+                }
+            });
         });
     });
 });
@@ -368,7 +410,6 @@ app.get("/images", (req, res) => {
     res.json(images);
   });
 });
-
 
 
 // Statische Dateien bereitstellen
