@@ -7,119 +7,123 @@ document.addEventListener("DOMContentLoaded", function () {
   const startUploadButton = document.getElementById("start-upload");
 
   let filesToUpload = [];
+  let cardId = null;
 
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
-    if (!token) {
-        alert("Ungültiger Zugriff. Kein Token gefunden.");
-        return;
-    }
+  if (!token) {
+    alert("Ungültiger Zugriff. Kein Token gefunden.");
+    return;
+  }
 
-    // Token an den Server zur Validierung senden
-    fetch(`/validate-token?token=${token}`)
-        .then(response => response.json())
-        .then(data => {
-            if (!data.valid) {
-                alert("Ungültiger oder abgelaufener Link.");
-                window.location.href = "/"; // Umleitung zur Startseite
-            } else {
-                console.log("Token ist gültig. Daten:", data);
-                // Hier kannst du spezifische Daten für den Asset Owner laden
-            }
-        })
-        .catch(err => {
-            console.error("Fehler bei der Token-Validierung:", err);
-            alert("Fehler bei der Token-Überprüfung.");
+  // Token an den Server zur Validierung senden
+  fetch(`/validate-token?token=${token}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (!data.valid) {
+        alert("Ungültiger oder abgelaufener Link.");
+        window.location.href = "/";
+      } else {
+        console.log("Token ist gültig. Daten:", data);
+        cardId = data.data.cardId;
+        console.log("Extrahierte Karten-ID:", cardId);
+        loadImages(cardId);
+      }
+    })
+    .catch((err) => {
+      console.error("Fehler bei der Token-Validierung:", err);
+      alert("Fehler bei der Token-Überprüfung.");
+    });
+
+  // Lade Bilder aus der Datenbank und zeige sie in der Liste an
+  function loadImages(cardId) {
+    fetch(`http://localhost:3000/images/${cardId}`)
+      .then((response) => response.json())
+      .then((images) => {
+        fileListToday.innerHTML = "";
+
+        images.forEach((image) => {
+          const fileName = image.file_path.split("/").pop();
+          console.log("File name:", fileName);
+
+          const timestamp = new Date(image.uploaded_at);
+          const day = timestamp.getDate().toString().padStart(2, "0");
+          const month = (timestamp.getMonth() + 1).toString().padStart(2, "0"); // Fix month offset
+          const year = timestamp.getFullYear();
+          const formattedTime = `${day}.${month}.${year}`;
+
+          const listItem = document.createElement("li");
+          listItem.className = "file-item";
+          listItem.innerHTML = `
+            <div class="file-info">
+              <img class="prev-pic" src="${image.file_path}" alt="preview">
+              <p class="filename">${fileName}</p>
+            </div>
+            <p class="timestamp">${formattedTime}</p>
+            <div class="file-actions">
+              <span class="icon close hidden">close</span>
+              <span class="icon delete">delete</span>
+              <span class="icon download">download</span>
+            </div>
+            <div class="file-progress hidden">
+              <div class="progress-container">
+                <div class="progress-bar"></div>
+              </div>
+            </div>
+          `;
+          fileListOld.appendChild(listItem);
+
+          // Delete button
+          const deleteIcon = listItem.querySelector(".icon.delete");
+          if (deleteIcon) {
+            deleteIcon.addEventListener("click", async () => {
+              try {
+                const response = await fetch("http://localhost:3000/delete", {
+                  method: "DELETE",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    filename: image.file_path.replace("/compressed/", ""),
+                  }),
+                });
+
+                if (response.ok) {
+                  listItem.remove();
+                  console.log(
+                    "Datei aus der Liste und der Datenbank gelöscht."
+                  );
+                } else {
+                  console.error("Fehler beim Löschen der Datei.");
+                }
+              } catch (error) {
+                console.error("Fehler beim Löschen der Datei:", error);
+              }
+            });
+          }
+
+          // Download button
+          const downloadIcon = listItem.querySelector(".icon.download");
+          if (downloadIcon) {
+            downloadIcon.addEventListener("click", () => {
+              console.log("Download angefordert für:", image.file_path);
+              const a = document.createElement("a");
+              a.href = image.file_path;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            });
+          }
         });
+      })
+      .catch((error) =>
+        console.error("Fehler beim Abrufen der Bilder:", error)
+      );
+  }
 
-  // Datei-Auswahl per Klick öffnen
   browseButton.addEventListener("click", function () {
     fileInput.click();
   });
-
-  // Lade Bilder aus der Datenbank und zeige sie in der Liste an
-  fetch("http://localhost:3000/images")
-    .then((response) => response.json())
-    .then((images) => {
-      // Entferne die existierenden Listenelemente, bevor neue Bilder hinzugefügt werden
-      fileListToday.innerHTML = "";
-
-      images.forEach((image) => {
-        const fileName = image.file_path.split("/").pop(); // Extrahiere den Dateinamen aus dem Pfad
-        console.log("File name:", fileName); // Debugging: Überprüfe den Dateinamen
-        // Zeitpunkt des Uploads nur mit Tag und Jahr anzeigen
-        const timestamp = new Date(image.uploaded_at);
-        const day = timestamp.getDate().toString().padStart(2, "0"); // Tag mit führender Null
-        const month = timestamp.getMonth().toString().padStart(2, "0"); // Monat mit führender Null
-        const year = timestamp.getFullYear();
-
-        // Formatierter Zeitstempel (DD/YYYY)
-        const formattedTime = `${day}.${month}.${year}`;
-
-        const listItem = document.createElement("li");
-        listItem.className = "file-item";
-        listItem.innerHTML = `
-          <div class="file-info">
-            <img class="prev-pic" src="${image.file_path}" alt="preview">
-            <p class="filename">${fileName}</p>  <!-- Zeige den Dateinamen an -->
-          </div>
-          <p class="timestamp">${formattedTime}</p>
-          <div class="file-actions">
-            <span class="icon close hidden">close</span>
-            <span class="icon delete">delete</span>
-            <span class="icon download">download</span>
-          </div>
-          <div class="file-progress hidden">
-            <div class="progress-container">
-              <div class="progress-bar"></div>
-            </div>
-          </div>
-        `;
-        fileListOld.appendChild(listItem);
-
-        const deleteIcon = listItem.querySelector(".icon.delete");
-        if (deleteIcon) {
-          deleteIcon.addEventListener("click", async () => {
-            try {
-              const response = await fetch("http://localhost:3000/delete", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  filename: image.file_path.replace("/compressed/", ""),
-                }),
-              });
-
-              if (response.ok) {
-                listItem.remove();
-                console.log("Datei aus der Liste und der Datenbank gelöscht.");
-              } else {
-                console.error("Fehler beim Löschen der Datei.");
-              }
-            } catch (error) {
-              console.error("Fehler beim Löschen der Datei:", error);
-            }
-          });
-        }
-
-        // Download-Button für die geladenen Bilder aktivieren
-        const downloadIcon = listItem.querySelector(".icon.download");
-        if (downloadIcon) {
-          downloadIcon.addEventListener("click", () => {
-            console.log("Download angefordert für:", image.file_path);
-
-            const a = document.createElement("a");
-            a.href = image.file_path; // Der Pfad zur komprimierten Datei
-            a.download = fileName; // Der Dateiname wird als Download-Name genutzt
-
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          });
-        }
-      });
-    })
-    .catch((error) => console.error("Fehler beim Abrufen der Bilder:", error));
 
   // Starte Upload automatisch nach Auswahl der Dateien
   fileInput.addEventListener("change", async function () {
@@ -129,43 +133,43 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Für jede Datei, die hochgeladen wird
     for (const file of files) {
       if (file.size > 50 * 1024 * 1024) {
-        console.error(`Die Datei ${file.name} ist zu groß. Maximal 50 MB erlaubt.`);
+        console.error(
+          `Die Datei ${file.name} ist zu groß. Maximal 50 MB erlaubt.`
+        );
         return;
       }
 
       filesToUpload.push(file);
 
-      // Datei in "Heute"-Liste hinzufügen
       const progressContainer = document.createElement("li");
       progressContainer.className = "file-item";
       progressContainer.innerHTML = `
         <div class="file-info">
-            <img class="prev-pic" alt="preview"> <!-- Kein src gesetzt -->
-            <p class="filename">${file.name}</p>
+          <img class="prev-pic" alt="preview">
+          <p class="filename">${file.name}</p>
         </div>
         <p class="timestamp">Ausstehend</p>
         <div class="file-actions">
-            <span class="icon close">close</span>
-            <span class="icon delete inactive">delete</span>
-            <span class="icon download inactive">download</span>
+          <span class="icon close">close</span>
+          <span class="icon delete inactive">delete</span>
+          <span class="icon download inactive">download</span>
         </div>
         <div class="file-progress">
-            <div class="progress-container">
-                <div class="progress-bar"></div>
-            </div>
+          <div class="progress-container">
+            <div class="progress-bar"></div>
+          </div>
         </div>
       `;
 
       fileListToday.appendChild(progressContainer);
 
-      // Close-Icon Funktion hinzufügen
+      // Close icon functionality
       const closeIcon = progressContainer.querySelector(".icon.close");
       if (closeIcon) {
         closeIcon.addEventListener("click", () => {
-          filesToUpload = filesToUpload.filter(f => f !== file);
+          filesToUpload = filesToUpload.filter((f) => f !== file);
           progressContainer.remove();
           console.log(`Die Datei ${file.name} wurde entfernt.`);
         });
@@ -174,23 +178,30 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   startUploadButton.addEventListener("click", async () => {
+    if (!cardId) {
+      console.error("Keine cardId gefunden. Upload abgebrochen.");
+      return;
+    }
+
     for (const file of filesToUpload) {
-      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
-        .find(item => item.querySelector(".filename").textContent === file.name);
+      const progressContainer = Array.from(
+        document.querySelectorAll(".file-item")
+      ).find(
+        (item) => item.querySelector(".filename").textContent === file.name
+      );
 
       if (!progressContainer) {
-        console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
+        console.error(`No progressContainer found for file ${file.name}`);
         continue;
       }
 
       const progressBar = progressContainer.querySelector(".progress-bar");
 
-      // Datei hochladen mit Fortschrittsanzeige
       try {
-        await uploadFile(file, progressBar, progressContainer);
-        updateFileStatus(file.name, "Erfolgreich hochgeladen");
+        await uploadFile(file, cardId, progressBar, progressContainer);
+        updateFileStatus(file.name, "Upload erfolgreich");
       } catch (error) {
-        updateFileStatus(file.name, "Fehler beim Upload", true);
+        updateFileStatus(file.name, "Upload fehlgeschlagen", true);
       }
     }
   });
@@ -223,61 +234,55 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Datei hochladen mit Fortschrittsanzeige
-  function uploadFile(file, progressBar, progressContainer) {
+  function uploadFile(file, cardId, progressBar, progressContainer) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "http://localhost:3000/upload");
 
+      // Progress Event Listener
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          progressContainer.querySelector(".timestamp").textContent = "Datei wird geladen...";
+          progressContainer.querySelector(".timestamp").textContent =
+            "Datei wird geladen...";
           const percentComplete = (event.loaded / event.total) * 100;
           progressBar.style.width = `${percentComplete}%`;
 
-          // Wenn der Upload abgeschlossen ist (100%), entfernen wir die Statusanzeige
           if (percentComplete === 100) {
             setTimeout(() => {
-              // Zeitpunkt des Uploads nur mit Stunden und Minuten anzeigen
               const timestamp = new Date();
-              const hours = timestamp.getHours().toString().padStart(2, "0"); // Stunden mit führender Null
+              const hours = timestamp.getHours().toString().padStart(2, "0");
               const minutes = timestamp
                 .getMinutes()
                 .toString()
-                .padStart(2, "0"); // Minuten mit führender Null
-
-              // Formatierter Zeitstempel (HH:mm)
+                .padStart(2, "0");
               const formattedTime = `${hours}:${minutes}`;
 
-              // Zeitstempel setzen
               progressContainer.querySelector(".timestamp").textContent =
                 formattedTime;
               progressContainer.querySelector(
                 ".progress-container"
-              ).style.display = "none"; // Fortschrittsanzeige ausblenden
+              ).style.display = "none";
 
-              // Close-Icon ausblenden
               const closeIcon = progressContainer.querySelector(".icon.close");
-              if (closeIcon) {
-                closeIcon.style.display = "none"; // Close-Icon ausblenden
-              }
+              if (closeIcon) closeIcon.style.display = "none";
 
-              // Download- und Delete-Icon aktivieren
-              const deleteIcon = progressContainer.querySelector(".icon.delete");
-              const downloadIcon = progressContainer.querySelector(".icon.download");
+              const deleteIcon =
+                progressContainer.querySelector(".icon.delete");
+              const downloadIcon =
+                progressContainer.querySelector(".icon.download");
               if (deleteIcon && downloadIcon) {
-                deleteIcon.classList.remove("inactive"); // Delete-Icon aktivieren
-                downloadIcon.classList.remove("inactive"); // Download-Icon aktivieren
+                deleteIcon.classList.remove("inactive");
+                downloadIcon.classList.remove("inactive");
               }
-            }, 500); // Warten Sie, bis die Fortschrittsanzeige auf 100% steht
+            }, 500);
           }
         }
       };
 
+      // Upload Completed
       xhr.onload = () => {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
-
-          // Logge die gesamte Serverantwort
           console.log("Serverantwort erhalten:", response);
 
           if (!response.compressed || !response.compressed.path) {
@@ -289,69 +294,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
           console.log("Erhaltener Bildpfad:", response.compressed.path);
 
-          // Bild-Vorschau erst nach Upload setzen
+          // Set Image Preview
           const previewImg = progressContainer.querySelector(".prev-pic");
           previewImg.src = response.compressed.path;
           console.log("Vorschau-Bild gesetzt auf:", previewImg.src);
 
-          // Download-Icon Funktion hinzufügen
+          // Download Icon Functionality
           const downloadIcon =
             progressContainer.querySelector(".icon.download");
           if (downloadIcon) {
             downloadIcon.addEventListener("click", () => {
-              console.log(
-                "Download angefordert für:",
-                response.compressed.path
-              );
-
               const a = document.createElement("a");
-              a.href = response.compressed.path; // Der Pfad zur komprimierten Datei
-              a.download = file.name.replace(/\.[^/.]+$/, ".jpeg"); // Setzt die Dateiendung auf .jpeg
-
-              console.log(
-                "Generierter Download-Link:",
-                a.href,
-                "als",
-                a.download
-              );
-
+              a.href = response.compressed.path;
+              a.download = file.name.replace(/\.[^/.]+$/, ".jpeg");
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
             });
           }
 
+          // Delete Icon Functionality
           const deleteIcon = progressContainer.querySelector(".icon.delete");
           if (deleteIcon) {
-            console.log("🗑️ Delete-Icon gefunden für:", file.name); // Debug-Log hinzufügen
-
             deleteIcon.addEventListener("click", async () => {
-              console.log("🗑️ Klick auf Delete-Icon für:", file.name); // Wird das Event ausgelöst?
-
               try {
-                const response = await fetch("http://localhost:3000/delete", {
-                  method: "DELETE",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    filename: file.name.replace(/\.[^/.]+$/, ".jpeg"),
-                  }),
-                });
+                // Use the compressed.path and strip '/compressed/'
+                const filePath = response.compressed.path.replace(
+                  "/compressed/",
+                  ""
+                );
 
-                console.log("🌐 Server-Antwort erhalten");
+                console.log("Attempting to delete:", filePath); // Debugging path
 
-                const result = await response.json();
-                if (response.ok) {
+                const deleteResponse = await fetch(
+                  "http://localhost:3000/delete",
+                  {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ filename: filePath }),
+                  }
+                );
+
+                const result = await deleteResponse.json();
+
+                if (deleteResponse.ok) {
                   console.log("✅ Datei erfolgreich gelöscht:", file.name);
                   progressContainer.remove();
                 } else {
                   console.error("❌ Fehler beim Löschen:", result.message);
                 }
               } catch (error) {
-                console.error("❌ Fehler beim Serveraufruf:", error);
+                console.error(
+                  "❌ Fehler beim Serveraufruf während Löschvorgang:",
+                  error
+                );
               }
             });
-          } else {
-            console.warn("⚠️ Kein Delete-Icon gefunden für:", file.name);
           }
 
           resolve();
@@ -366,8 +364,12 @@ document.addEventListener("DOMContentLoaded", function () {
         reject(new Error("Netzwerkfehler beim Hochladen der Datei"));
       };
 
+      // Prepare FormData with file and cardId
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("cardId", cardId);
+
+      // Start the upload
       xhr.send(formData);
     });
   }
