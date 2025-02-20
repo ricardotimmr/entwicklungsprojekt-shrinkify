@@ -20,27 +20,52 @@
         </header>
         <main>
             <section class="contentmanager-options">
+
                 <div class="actions">
                     <h2>Übersicht</h2>
                     <nav>
-                        <a href="/" class="search">
-                            <p>Suche...</p>
+                        <div class="search-bar">
+                            <input type="text" id="customer-search" class="search" placeholder="Suche nach Kunden...">
                             <span class="icon">search</span>
-                        </a>
-                        <a href="/" class="new-customer">
-                            <p>Neuer Kunde</p>
-                            <span class="icon">add</span>
-                        </a>
+                        </div>
+                    
+                        <button id="new-customer-button" class="new-customer">Neuer Kunde <span class="icon">add</span></button>
                     </nav>
                 </div>
+
+                <div id="new-customer-form" style="display: none;">
+                    <span class="close-btn" onclick="document.getElementById('new-customer-form').style.display = 'none';">&times;</span>
+                    <input type="text" id="customer-name" placeholder="Kundenname" />
+                    <input type="email" id="customer-email" placeholder="Email" />
+                    <button id="submit-customer" class="submit-customer">Kunde erstellen</button>
+                </div>
+
+                <div id="new-link-form" style="display: none;">
+                    <span class="close-btn" onclick="closeNewLinkForm();">&times;</span>
+                    <input type="text" id="project-name" placeholder="Projektname" />
+                    <button id="submit-link">Karte erstellen</button>
+                </div>
+
                 <div class="customer-list">
-                    <div class="customer">
+
+                    <div class="customer" data-id="1">
+
                         <div class="customer-name">
                             <button class="customer-button" onclick="toggleCard(this)">MediaFlare</button>
                             <span class="icon">download</span>
                         </div>
+
                         <div class="customer-links" style="display: none;">
-                        <div class="card">
+
+                        <!-- <div class="card">
+
+                            <div id="new-project-form" style="display: none;">
+                                <span class="close-btn" onclick="document.getElementById('new-project-form').style.display = 'none';">&times;</span>
+                                <input type="text" id="project-name" placeholder="Projektname" />
+                                <input type="text" id="project-name" placeholder="Projektname" />
+                                <button id="submit-project" class="submit-project">Projekt erstellen</button>
+                            </div>
+
                             <div class="project">
                                 <h3>Projektname-1</h3>
                                 <div class="project-link">
@@ -48,6 +73,7 @@
                                     <span class="icon">delete</span>
                                 </div>
                             </div>
+
                             <div class="settings">
                                 <form class="setting-1">
                                     <label for="fformat">Dateiformat</label>
@@ -56,59 +82,32 @@
                                         <option value=".png">.png</option>
                                     </select>
                                     <label for="fsize">Dateigröße (max.)</label>
-                                    <input type="text" placeholder="50 MB" onblur="addMB(this)" class="fsize" name="fsize">
+                                    <input type="text" placeholder="50 MB" class="fsize" name="fsize">
                                  </form>
                                  <form class="setting-2">
                                     <label for="dcompression">Komprimierungsgrad</label>
-                                    <input type="text" placeholder="80%" onblur="addPercentageSymbol(this)" class="dcompression" name="dcompression">
+                                    <input type="text" placeholder="80%" class="dcompression" name="dcompression">
                                  </form>
                                  <form class="setting-3">
                                     <label for="edate">Ablaufdatum des Links</label>
                                     <input type="date" class="edate" name="edate">
                                     <label for="credits">Guthaben Anzeige</label>
-                                    <input type="text" placeholder="6 Credits" onblur="addCredits(this)" class="credits" name="credits">
+                                    <input type="text" placeholder="6 Credits" class="credits" name="credits">
                                  </form>
                             </div>
+                            
+                        </div> -->
                         </div>
 
-                        <div class="card">
-                            <div class="project">
-                                <h3>Projektname-2</h3>
-                                <div class="project-link">
-                                    <a href="/">https:/shrinkify.de/Projekt-1/...</a>
-                                    <span class="icon">delete</span>
-                                </div>
-                            </div>
-                            <div class="settings">
-                                <form class="setting-1">
-                                    <label for="fformat">Dateiformat</label>
-                                    <select class="fformat" name="fformat">
-                                        <option value=".jpg">.jpg</option>
-                                        <option value=".png">.png</option>
-                                    </select>
-                                    <label for="fsize">Dateigröße (max.)</label>
-                                    <input type="text" class="fsize" name="fsize">
-                                 </form>
-                                 <form class="setting-2">
-                                    <label for="dcompression">Komprimierungsgrad</label>
-                                    <input type="text" class="dcompression" name="dcompression">
-                                 </form>
-                                 <form class="setting-3">
-                                    <label for="edate">Ablaufdatum des Links</label>
-                                    <input type="text" class="edate" name="edate">
-                                    <label for="credits">Guthaben Anzeige</label>
-                                    <input type="text" class="credits" name="credits">
-                                 </form>
-                            </div>
-                        </div>
-                        </div>
-                        <a href="/" class="new-link">
+                        <a href="javascript:void(0);" class="new-link" onclick="openNewLinkForm('1')">
                             <p>Neuer Link</p>
                             <span class="icon">add</span>
                         </a>
+
                     </div>
                 </div>
             </section>
         </main>
-        <script src="/src/scripts/contentmanager.js"></script>
+        <script src="/src/scripts/createNewCustomerLinks.js"></script>
+        <script src="/src/scripts/createNewCustomer.js"></script>
     </body>

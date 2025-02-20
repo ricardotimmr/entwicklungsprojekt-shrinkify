@@ -1,0 +1,11 @@
+# Node.js
+node_modules/
+
+# Uploads Ordner
+/uploads/
+
+# Logs
+*.log
+
+# Environment files
+.env

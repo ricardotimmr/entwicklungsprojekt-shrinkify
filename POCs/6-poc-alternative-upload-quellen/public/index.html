@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://apis.google.com https://accounts.google.com https://www.dropbox.com;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1-poc-datei-upload</title>
+    <script type="text/javascript"
+    src="https://www.dropbox.com/static/api/2/dropins.js"
+    id="dropboxjs"
+    data-app-key="6eewjssmb5z6yux"
+    async>
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form>
+        <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" multiple />
+        <button type="submit">Upload</button>
+    </form>
+    <ul id="fileList"></ul>
+    <div id="uploadStatus"></div>
+    <div id="toastContainer"></div>
+
+    <!-- Button to trigger Google Drive picker -->
+    <div id="fileSources">
+        <button id="selectFromGoogleDrive">Google Drive</button>
+        <button id="selectFromDropBox">Dropbox</button>
+        <button id="selectFromURL">URL</button>
+    </div>
+
+    <div id="urlUploadContainer" style="display: none;">
+        <input type="text" id="fileUrlInput" placeholder="Enter image URL">
+        <button id="uploadFromUrl">Upload</button>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script src="script.js"></script>
+    <script src="googledrive.js"></script>
+    <script src="url.js"></script>
+    <script src="dropbox.js"></script>
+</body>
+</html>
