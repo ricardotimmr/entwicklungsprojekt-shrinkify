@@ -10,6 +10,7 @@ services:
       - "3000:3000"
     volumes:
       - ./app:/app
+      - ./compressed:/app/compressed   # Füge hier das Volumen für den "compressed"-Ordner hinzu
     environment:
       NODE_ENV: development
       SQLITE_DB_PATH: /app/data/database.sqlite

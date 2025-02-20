@@ -127,6 +127,17 @@ input[type="file"] {
     margin-bottom: var(--xxxl);
 }
 
+.file-view > button {
+    padding: 10px 20px;
+    font-size: var(--fs-s);
+    font-weight: var(--fw-bold);
+    color: #ffffff;
+    background: var(--color-purple);
+    border: none;
+    border-radius: 5px;
+    margin-top: 25px;
+}
+
 .file-list-today {
     max-width: 650px;
     display: flex;
@@ -164,10 +175,6 @@ input[type="file"] {
         text-align: right;
         font-size: var(--m);
         gap: var(--xl);
-
-        .close {
-            color: var(--color-red);
-        }
     }
 }
 
@@ -329,6 +336,10 @@ input[type="file"] {
             font-weight: var(--fw-bold);
         }
     }
+}
+
+.inactive {
+    color: var(--color-grey);
 }
 
 .hidden {
