@@ -54,6 +54,7 @@ db.serialize(() => {
         max_file_size TEXT,
         compression_level TEXT,
         expiration_date DATE NOT NULL,
+        credits INTEGER DEFAULT 0,  -- Add this line
         url TEXT,
         FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
     )`, (err) => {
@@ -187,7 +188,7 @@ app.get('/customers', (req, res) => {
 // Card Routes
 // Create a new card
 app.post('/cards', (req, res) => {
-    const { customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate } = req.body;
+    const { customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate, credits = 0 } = req.body;
 
     if (!customerId || !name || !expirationDate) {
         return res.status(400).json({
@@ -196,11 +197,10 @@ app.post('/cards', (req, res) => {
         });
     }
 
-    // Zuerst die Karte ohne URL erstellen
-    const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, url) 
-                   VALUES (?, ?, ?, ?, ?, ?, NULL)`;
+    const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, credits, url) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`;
 
-    db.run(query, [customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate], function (err) {
+    db.run(query, [customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate, credits], function (err) {
         if (err) {
             console.error("Fehler beim Hinzufügen der Karte:", err.message);
             return res.status(500).json({ success: false, message: "Fehler beim Hinzufügen der Karte." });
@@ -208,21 +208,17 @@ app.post('/cards', (req, res) => {
 
         const cardId = this.lastID;
 
-        // Token generieren
+        // Generate token and personalized link
         const payload = { cardId, customerId };
-        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '7d' }); // Token läuft in 7 Tagen ab
-
-        // Erstelle personalisierten Link
+        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '7d' });
         const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
 
-        // Update der Karte mit dem Link
         db.run(`UPDATE customer_links SET url = ? WHERE id = ?`, [personalizedLink, cardId], (updateErr) => {
             if (updateErr) {
                 console.error("Fehler beim Speichern des Links:", updateErr.message);
                 return res.status(500).json({ success: false, message: "Fehler beim Speichern des Links." });
             }
 
-            // Rückgabe der Karte mit dem Link
             res.status(201).json({
                 success: true,
                 card: {
@@ -233,6 +229,7 @@ app.post('/cards', (req, res) => {
                     max_file_size: maxFileSize,
                     compression_level: compressionLevel,
                     expiration_date: expirationDate,
+                    credits,  // Return credits
                     url: personalizedLink
                 }
             });
@@ -257,7 +254,7 @@ app.get('/customers/:customerId/cards', (req, res) => {
 // Update card details
 app.patch('/cards/:cardId', (req, res) => {
     const { cardId } = req.params;
-    const { file_format, max_file_size, compression_level, expiration_date } = req.body;
+    const { file_format, max_file_size, compression_level, expiration_date, credits } = req.body;
 
     let updateFields = [];
     let values = [];
@@ -278,10 +275,14 @@ app.patch('/cards/:cardId', (req, res) => {
         updateFields.push("expiration_date = ?");
         values.push(expiration_date);
     }
-
+    if (credits !== undefined) {
+        updateFields.push("credits = ?");
+        values.push(credits);
+    } 
+    
     if (updateFields.length === 0) {
         return res.status(400).json({ success: false, message: "Keine gültigen Felder zum Aktualisieren." });
-    }
+    }   
 
     values.push(cardId); // Card ID als letztes Argument für das WHERE-Statement
 
@@ -381,6 +382,15 @@ app.post("/upload", upload.single("file"), async (req, res) => {
           .toFile(outputFilePath);
   
         console.log("✅ Bild gespeichert:", outputFilePath);
+
+        // Deduct 1 credit
+        db.run(`UPDATE customer_links SET credits = credits - 1 WHERE id = ?`, [cardId], (err) => {
+            if (err) {
+                console.error("Fehler beim Aktualisieren der Credits:", err.message);
+            } else {
+                console.log("1 Credit abgezogen.");
+            }
+        });
   
         // Save image path with cardId in the DB
         db.run("INSERT INTO images (file_path, card_id) VALUES (?, ?)", [`/compressed/${outputFileName}`, cardId], (err) => {

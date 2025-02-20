@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
   
-    const { max_file_size, compression_level, file_format, expiration_date } = cardData.card;
+    const { max_file_size, compression_level, file_format, expiration_date, credits } = cardData.card;
   
     // Convert settings to usable formats
     const maxFileSizeBytes = parseInt(max_file_size) * 1024 * 1024;
@@ -217,6 +217,11 @@ document.addEventListener("DOMContentLoaded", function () {
   
     if (today > expDate) {
       alert("Der Link ist abgelaufen und kann nicht verwendet werden.");
+      return;
+    }
+
+    if (credits <= 0) {
+      alert("Keine Credits mehr verfügbar. Bitte wenden Sie sich an den Content Manager.");
       return;
     }
   
@@ -241,7 +246,12 @@ document.addEventListener("DOMContentLoaded", function () {
           compressionPercent,
           fileFormat,
         });
+
         updateFileStatus(file.name, "Upload erfolgreich");
+
+        if (uploadResponse.remainingCredits !== undefined) {
+          document.querySelector(".settings-container .settings ul li:nth-child(5) p").textContent = `${uploadResponse.remainingCredits} Credits`;
+        }
       } catch (error) {
         updateFileStatus(file.name, "Upload fehlgeschlagen", true);
       }

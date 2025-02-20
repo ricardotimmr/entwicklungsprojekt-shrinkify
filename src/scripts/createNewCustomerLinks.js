@@ -119,25 +119,6 @@ function loadCustomerCards(customerId) {
     .catch((err) => console.error("Fehler beim Laden der Karten:", err));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Initial load of cards for all customers
-  const customers = document.querySelectorAll(".customer");
-  customers.forEach((customer) => {
-    const customerId = customer.dataset.id;
-    if (customerId) {
-      loadCustomerCards(customerId);
-    }
-  });
-
-  // Event-Listener für alle Eingabefelder hinzufügen
-  document.addEventListener("change", (event) => {
-    const target = event.target;
-    if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
-      updateCardSettings(target);
-    }
-  });
-});
-
 // Funktion zum Aktualisieren der Karten-Einstellungen
 function updateCardSettings(input) {
   const cardId = input.dataset.cardId;
@@ -205,26 +186,75 @@ function deleteCard(cardId) {
     .catch((err) => console.error("Fehler beim Löschen der Karte:", err));
 }
 
-document.addEventListener("change", (event) => {
-  const target = event.target;
+document.addEventListener("DOMContentLoaded", () => {
+    // Initial load of cards for all customers
+    const customers = document.querySelectorAll(".customer");
+    customers.forEach((customer) => {
+      const customerId = customer.dataset.id;
+      if (customerId) {
+        loadCustomerCards(customerId);
+      }
+    });
+  
+    // Unified Event Listener for All Changes
+    document.addEventListener("change", (event) => {
+      const target = event.target;
+  
+      // Handle expiration date field
+      if (target.matches(".edate")) {
+        const expirationDate = new Date(target.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Compare only the date
+  
+        if (expirationDate < today) {
+          target.classList.add("expired");
+        } else {
+          target.classList.remove("expired");
+        }
+      }
+  
+      // Handle card settings updates (format, size, compression, expiration)
+      if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+        updateCardSettings(target);
+      }
+  
+      // Handle credits update
+      if (target.matches(".credits")) {
+        const cardId = target.dataset.cardId;
+        const credits = parseInt(target.value);
 
-  // Prüfe, ob das geänderte Feld ein Ablaufdatum ist
-  if (target.matches(".edate")) {
-    const expirationDate = new Date(target.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
+        if (!cardId) {
+            console.error("Keine cardId gefunden. Abbruch des Updates.");
+            alert("Fehler: Keine Karten-ID gefunden.");
+            return;
+          }
+        
+          if (isNaN(credits) || credits < 0) {
+            alert("Bitte geben Sie eine gültige Anzahl von Credits ein.");
+            return;
+          }
 
-    if (expirationDate < today) {
-      target.classList.add("expired");
-    } else {
-      target.classList.remove("expired");
-    }
-  }
-
-  if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
-    updateCardSettings(target);
-  }
-});
+          console.log("Sending PATCH request to /cards/" + cardId, { credits });
+  
+          fetch(`/cards/${cardId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credits })
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                console.log("Credits erfolgreich aktualisiert.");
+              } else {
+                console.error("Fehler beim Aktualisieren der Credits:", data.message);
+                alert("Fehler beim Aktualisieren der Credits.");
+              }
+            })
+            .catch(err => console.error("Fehler:", err));
+        }
+    });
+  });
+  
 
 // Add a new card to the UI dynamically
 function addCardToCustomer(card, customerId) {
@@ -293,7 +323,7 @@ function addCardToCustomer(card, customerId) {
     isExpired ? "expired" : ""
   }" name="edate" data-card-id="${card.id}">
                     <label for="credits">Guthaben Anzeige</label>
-                    <input type="text" placeholder="6 Credits" class="credits" name="credits">
+                    <input type="text" placeholder="0 Credits" class="credits" name="credits" data-card-id="${card.id}" value="${card.credits || 0}">
                 </form>
             </div>
         </div>
