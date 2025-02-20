@@ -380,7 +380,11 @@ input[type="file"] {
     }
   
     .modal-content {
-      background: white;
+        background: linear-gradient(
+            135deg,
+            var(--color-fade-blue),
+            var(--color-fade-purple)
+          );
       padding: 20px;
       border-radius: 8px;
       text-align: center;
@@ -400,14 +404,14 @@ input[type="file"] {
   
       button {
         padding: 8px 16px;
-        background-color: #007BFF;
-        color: white;
+        background-color: var(--color-purple);
+        color: var(--color-purple-dark);
         border: none;
         border-radius: 4px;
         cursor: pointer;
   
         &:hover {
-          background-color: #0056b3;
+          background-color: var(--color-red);
         }
       }
   
@@ -431,6 +435,7 @@ input[type="file"] {
     height: 100%;
     backdrop-filter: blur(5px);
     background: rgba(0,0,0,0.4);
+    transition: background 0.3s ease;
   
     &.visible {
       display: block;

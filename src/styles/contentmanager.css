@@ -306,3 +306,88 @@ body.blur-active::before {
         }
     }
 }
+
+/* New Link Form */
+#new-link-form {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: var(--l);
+    padding-top: var(--xl);
+    background: linear-gradient(
+      135deg,
+      var(--color-fade-blue),
+      var(--color-fade-purple)
+    );
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    z-index: 1000;
+    text-align: center;
+  }
+  
+  /* Input Field */
+  #new-link-form input[type="text"] {
+    width: 80%;
+    padding: 12px;
+    margin-bottom: var(--s);
+    font-size: var(--fs-m);
+    border-radius: 8px;
+    background-color: var(--color-purple);
+    color: var(--color-purple-dark);
+    border: none;
+  }
+  
+  #new-link-form input::placeholder {
+    color: var(--color-purple-dark);
+  }
+  
+  /* Submit Button */
+  #submit-link {
+    width: 87%;
+    padding: 12px;
+    background-color: var(--color-purple);
+    color: var(--color-purple-dark);
+    font-size: var(--fs-m);
+    font-weight: var(--fw-bold);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  #submit-link:hover {
+    background-color: var(--color-red);
+  }
+  
+  /* Close Button */
+  #new-link-form .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: var(--fs-xl);
+    color: var(--color-red);
+    cursor: pointer;
+    font-weight: var(--fw-medium);
+    transition: color 0.3s ease;
+  }
+  
+  #new-link-form .close-btn:hover {
+    color: var(--color-red);
+  }
+  
+  /* Blur Effect on Background */
+  body.blur-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+  }
+  

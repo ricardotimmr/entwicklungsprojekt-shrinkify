@@ -347,3 +347,50 @@ function addCardToCustomer(card, customerId) {
   );
   deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
+
+// Function to open the new link form with background blur and input reset
+function openNewLinkForm(customerId) {
+  const form = document.getElementById("new-link-form");
+  const body = document.body;
+
+  // Reset input field
+  form.querySelector("#project-name").value = "";
+
+  // Show the form and apply blur
+  form.style.display = "block";
+  body.classList.add("blur-active");
+  form.dataset.customerId = customerId;
+
+  // Add event listener to detect clicks outside the form
+  setTimeout(() => {
+    document.addEventListener("click", handleOutsideClick);
+  }, 0);
+}
+
+// Function to close the new link form
+function closeNewLinkForm() {
+  const form = document.getElementById("new-link-form");
+  const body = document.body;
+
+  form.style.display = "none";
+  form.dataset.customerId = "";
+  body.classList.remove("blur-active");
+
+  // Remove outside click listener
+  document.removeEventListener("click", handleOutsideClick);
+}
+
+// Function to detect clicks outside the form and close it
+function handleOutsideClick(event) {
+  const form = document.getElementById("new-link-form");
+
+  // If the click is outside the form, close it
+  if (!form.contains(event.target)) {
+    closeNewLinkForm();
+  }
+}
+
+// Prevent closing when clicking inside the form
+document.getElementById("new-link-form").addEventListener("click", (event) => {
+  event.stopPropagation();
+});
