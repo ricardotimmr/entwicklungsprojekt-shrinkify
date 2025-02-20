@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileListOld = document.getElementById("file-list-old");
   const startUploadButton = document.getElementById("start-upload");
 
+  const dropboxButton = document.getElementById("selectFromDropBox");
+
   let filesToUpload = [];
   let cardId = null;
 
@@ -195,65 +197,120 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Keine cardId gefunden. Upload abgebrochen.");
       return;
     }
-  
+
     // Fetch card settings before starting upload
     const response = await fetch(`/cards/${cardId}`);
     const cardData = await response.json();
-  
+
     if (!cardData.success) {
       console.error("Fehler beim Abrufen der Karteneinstellungen.");
       return;
     }
-  
-    const { max_file_size, compression_level, file_format, expiration_date, credits } = cardData.card;
-  
+
+    const {
+      max_file_size,
+      compression_level,
+      file_format,
+      expiration_date,
+      credits,
+    } = cardData.card;
+
     // Convert settings to usable formats
     const maxFileSizeBytes = parseInt(max_file_size) * 1024 * 1024;
     const compressionPercent = parseInt(compression_level);
-    const fileFormat = file_format.replace('.', '');
-  
+    const fileFormat = file_format.replace(".", "");
+
     const today = new Date();
     const expDate = new Date(expiration_date);
-  
+
     if (today > expDate) {
       alert("Der Link ist abgelaufen und kann nicht verwendet werden.");
       return;
     }
 
     if (credits <= 0) {
-      alert("Keine Credits mehr verfügbar. Bitte wenden Sie sich an den Content Manager.");
+      alert(
+        "Keine Credits mehr verfügbar. Bitte wenden Sie sich an den Content Manager."
+      );
       return;
     }
-  
+
     for (const file of filesToUpload) {
-      if (file.size > maxFileSizeBytes) {
-        alert(`Die Datei ${file.name} überschreitet die maximale Dateigröße von ${max_file_size}.`);
+      let actualFile = file; // To handle Dropbox files
+
+      if (file.isDropbox) {
+        // Handle Dropbox file
+        try {
+          const dropboxResponse = await fetch(file.fileUrl);
+          const blob = await dropboxResponse.blob();
+          actualFile = new File([blob], file.fileName, { type: blob.type });
+
+          console.log(`Dropbox-Datei geladen: ${file.fileName}`);
+        } catch (error) {
+          console.error(
+            `Fehler beim Laden der Dropbox-Datei ${file.fileName}:`,
+            error
+          );
+          alert(`Fehler beim Laden der Dropbox-Datei ${file.fileName}`);
+          continue;
+        }
+      }
+
+      if (actualFile.size > maxFileSizeBytes) {
+        alert(
+          `Die Datei ${actualFile.name} überschreitet die maximale Dateigröße von ${max_file_size}.`
+        );
         continue; // Skip file
       }
-  
-      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
-        .find(item => item.querySelector(".filename").textContent === file.name);
-  
+
+      const progressContainer = Array.from(
+        document.querySelectorAll(".file-item")
+      ).find(
+        (item) =>
+          item.querySelector(".filename").textContent === file.fileName ||
+          file.name
+      );
+
       if (!progressContainer) {
-        console.error(`No progressContainer found for file ${file.name}`);
+        console.error(
+          `No progressContainer found for file ${file.fileName || file.name}`
+        );
         continue;
       }
-  
+
       const progressBar = progressContainer.querySelector(".progress-bar");
-  
+
       try {
-        await uploadFile(file, cardId, progressBar, progressContainer, {
-          compressionPercent,
-          fileFormat,
-        });
+        const uploadResponse = await uploadFile(
+          actualFile,
+          cardId,
+          progressBar,
+          progressContainer,
+          {
+            compressionPercent,
+            fileFormat,
+          }
+        );
 
-        updateFileStatus(file.name, "Upload erfolgreich");
+        updateFileStatus(actualFile.name, "Upload erfolgreich");
 
-        if (uploadResponse.remainingCredits !== undefined) {
-          document.querySelector(".settings-container .settings ul li:nth-child(5) p").textContent = `${uploadResponse.remainingCredits} Credits`;
+        // Safely check for remainingCredits
+        if (uploadResponse && uploadResponse.remainingCredits !== undefined) {
+          document.querySelector(
+            ".settings-container .settings ul li:nth-child(5) p"
+          ).textContent = `${uploadResponse.remainingCredits} Credits`;
+          console.log(`Credits updated: ${uploadResponse.remainingCredits}`);
+        } else {
+          console.warn("Upload response missing 'remainingCredits'.");
         }
+
+        console.log(`Upload abgeschlossen für: ${actualFile.name}`);
       } catch (error) {
-        updateFileStatus(file.name, "Upload fehlgeschlagen", true);
+        updateFileStatus(actualFile.name, "Upload fehlgeschlagen", true);
+        console.error(
+          `Fehler beim Upload der Datei ${actualFile.name}:`,
+          error
+        );
       }
     }
   });
@@ -472,16 +529,65 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
   }
 
-  // Toast-Benachrichtigungen anzeigen
-  function showToast(message, type = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
+  dropboxButton.addEventListener("click", () => {
+    console.log("Dropbox button clicked, opening chooser...");
 
-    toastContainer.appendChild(toast);
+    Dropbox.choose({
+      success: function (files) {
+        console.log("Dropbox chooser success callback triggered.");
+        if (!files.length) {
+          console.error("Keine Datei ausgewählt.");
+          return;
+        }
 
-    setTimeout(() => {
-      toast.remove();
-    }, 2000); // 2 Sekunden
-  }
+        const fileUrl = files[0].link;
+        const fileName = files[0].name;
+        console.log(`Dropbox file selected: ${fileName}, URL: ${fileUrl}`);
+
+        // Add Dropbox file to the UI list
+        const listItem = document.createElement("li");
+        listItem.className = "file-item";
+        listItem.dataset.fileUrl = fileUrl;
+        listItem.innerHTML = `
+          <div class="file-info">
+            <img class="prev-pic" src="${fileUrl}" alt="preview">
+            <p class="filename">${fileName}</p>
+          </div>
+          <p class="timestamp">Ausstehend</p>
+          <div class="file-actions">
+            <span class="icon close">close</span>
+            <span class="icon delete inactive">delete</span>
+            <span class="icon download inactive">download</span>
+          </div>
+          <div class="file-progress hidden">
+            <div class="progress-container">
+              <div class="progress-bar"></div>
+            </div>
+          </div>
+        `;
+
+        fileListToday.appendChild(listItem);
+
+        // Store Dropbox file info
+        filesToUpload.push({ fileUrl, fileName, isDropbox: true });
+        console.log(`File ${fileName} added to upload queue.`);
+
+        // Enable remove option
+        const closeIcon = listItem.querySelector(".icon.close");
+        if (closeIcon) {
+          closeIcon.addEventListener("click", () => {
+            filesToUpload = filesToUpload.filter((f) => f.fileUrl !== fileUrl);
+            listItem.remove();
+            console.log(`Datei entfernt: ${fileName}`);
+          });
+        }
+      },
+      cancel: function () {
+        console.log("Dropbox chooser was canceled.");
+      },
+      linkType: "direct",
+      multiselect: false,
+      extensions: [".png", ".jpg", ".jpeg"],
+    });
+  });
 });
