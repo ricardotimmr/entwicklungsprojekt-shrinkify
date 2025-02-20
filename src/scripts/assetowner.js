@@ -29,6 +29,19 @@ document.addEventListener("DOMContentLoaded", function () {
         cardId = data.data.cardId;
         console.log("Extrahierte Karten-ID:", cardId);
         loadImages(cardId);
+
+        // Fetch card details and update settings container
+        fetch(`/customers/${data.data.customerId}/cards`)
+          .then((response) => response.json())
+          .then((cardsData) => {
+            const card = cardsData.cards.find((c) => c.id === cardId);
+            if (card) {
+              updateSettingsContainer(card); // <--- Call here
+            }
+          })
+          .catch((err) =>
+            console.error("Fehler beim Abrufen der Kartendaten:", err)
+          );
       }
     })
     .catch((err) => {
@@ -182,24 +195,63 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Keine cardId gefunden. Upload abgebrochen.");
       return;
     }
+  
+    // Fetch card settings before starting upload
+    const response = await fetch(`/cards/${cardId}`);
+    const cardData = await response.json();
+  
+    if (!cardData.success) {
+      console.error("Fehler beim Abrufen der Karteneinstellungen.");
+      return;
+    }
+  
+    const { max_file_size, compression_level, file_format, expiration_date, credits } = cardData.card;
+  
+    // Convert settings to usable formats
+    const maxFileSizeBytes = parseInt(max_file_size) * 1024 * 1024;
+    const compressionPercent = parseInt(compression_level);
+    const fileFormat = file_format.replace('.', '');
+  
+    const today = new Date();
+    const expDate = new Date(expiration_date);
+  
+    if (today > expDate) {
+      alert("Der Link ist abgelaufen und kann nicht verwendet werden.");
+      return;
+    }
 
+    if (credits <= 0) {
+      alert("Keine Credits mehr verfügbar. Bitte wenden Sie sich an den Content Manager.");
+      return;
+    }
+  
     for (const file of filesToUpload) {
-      const progressContainer = Array.from(
-        document.querySelectorAll(".file-item")
-      ).find(
-        (item) => item.querySelector(".filename").textContent === file.name
-      );
-
+      if (file.size > maxFileSizeBytes) {
+        alert(`Die Datei ${file.name} überschreitet die maximale Dateigröße von ${max_file_size}.`);
+        continue; // Skip file
+      }
+  
+      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
+        .find(item => item.querySelector(".filename").textContent === file.name);
+  
       if (!progressContainer) {
         console.error(`No progressContainer found for file ${file.name}`);
         continue;
       }
-
+  
       const progressBar = progressContainer.querySelector(".progress-bar");
-
+  
       try {
-        await uploadFile(file, cardId, progressBar, progressContainer);
+        await uploadFile(file, cardId, progressBar, progressContainer, {
+          compressionPercent,
+          fileFormat,
+        });
+
         updateFileStatus(file.name, "Upload erfolgreich");
+
+        if (uploadResponse.remainingCredits !== undefined) {
+          document.querySelector(".settings-container .settings ul li:nth-child(5) p").textContent = `${uploadResponse.remainingCredits} Credits`;
+        }
       } catch (error) {
         updateFileStatus(file.name, "Upload fehlgeschlagen", true);
       }
@@ -389,6 +441,35 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
     });
+  }
+
+  function updateSettingsContainer(card) {
+    const settingsContainer = document.querySelector(
+      ".settings-container .settings ul"
+    );
+
+    settingsContainer.innerHTML = `
+        <li>
+            <p class="settings-category">Dateiformate</p>
+            <p>${card.file_format || ".jpeg"}</p>
+        </li>
+        <li>
+            <p class="settings-category">Dateigröße (max.)</p>
+            <p>${card.max_file_size || "50 MB"}</p>
+        </li>
+        <li>
+            <p class="settings-category">Komprimierungsgrad</p>
+            <p>${card.compression_level || "75%"}</p>
+        </li>
+        <li>
+            <p class="settings-category">Ablaufdatum des Links</p>
+            <p>${new Date(card.expiration_date).toLocaleDateString()}</p>
+        </li>
+        <li>
+            <p class="settings-category">Guthaben Anzeige</p>
+            <p>${card.credits || 0} Credits</p>
+        </li>
+    `;
   }
 
   // Toast-Benachrichtigungen anzeigen
