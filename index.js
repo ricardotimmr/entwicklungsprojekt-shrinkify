@@ -7,9 +7,10 @@ const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
 
 const axios = require("axios");
+const cors = require("cors");
 
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = "your-secret-key";
+const SECRET_KEY = "your-secret-key"; //brauchen noch function zum generieren
 
 const app = express();
 const port = 3000;
