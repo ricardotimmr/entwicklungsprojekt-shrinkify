@@ -480,7 +480,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Prepare FormData with file and cardId
       const formData = new FormData();
-      formData.append("file", file);
+      const actualFile = file.fileBlob || file;
+      formData.append("file", actualFile, actualFile.name);
       formData.append("cardId", cardId);
 
       // Start the upload
@@ -596,117 +597,137 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-const CLIENT_ID = "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com";
-const PICKER_API_KEY = "AIzaSyCKvK30z0OWcsJdHG41QT8qE3oWVmIgtH8";
-const SCOPES = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive";
+  const CLIENT_ID =
+    "448628978608-8taeksfsvhtjhrge7pbge6sc0gj7mb4e.apps.googleusercontent.com";
+  const PICKER_API_KEY = "AIzaSyCKvK30z0OWcsJdHG41QT8qE3oWVmIgtH8";
+  const SCOPES =
+    "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive";
 
-let pickerApiLoaded = false;
-let oauthToken;
-let tokenClient;
+  let pickerApiLoaded = false;
+  let oauthToken;
+  let tokenClient;
 
-gapi.load("picker", () => {
+  gapi.load("picker", () => {
     console.log("Google Picker API loaded successfully.");
     pickerApiLoaded = true;
-});
+  });
 
-window.onload = () => {
+  window.onload = () => {
     console.log("Initializing Token Client...");
     tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: (tokenResponse) => {
-            console.log("OAuth Token received:", tokenResponse);
-            oauthToken = tokenResponse.access_token;
-            createPicker();
-        },
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (tokenResponse) => {
+        console.log("OAuth Token received:", tokenResponse);
+        oauthToken = tokenResponse.access_token;
+        createPicker();
+      },
     });
-};
+  };
 
-document.getElementById("selectFromGoogleDrive").addEventListener("click", () => {
-    console.log("Google Drive selection clicked. Requesting access token...");
-    tokenClient.requestAccessToken();
-});
+  document
+    .getElementById("selectFromGoogleDrive")
+    .addEventListener("click", () => {
+      console.log("Google Drive selection clicked. Requesting access token...");
+      tokenClient.requestAccessToken();
+    });
 
-function createPicker() {
+  function createPicker() {
     if (pickerApiLoaded && oauthToken) {
-        console.log("Creating Google Picker with OAuth Token...");
-        
-        const picker = new google.picker.PickerBuilder()
-            .addView(google.picker.ViewId.DOCS)
-            .setOAuthToken(oauthToken)
-            .setDeveloperKey(PICKER_API_KEY)
-            .setOrigin(window.location.origin)
-            .setCallback(pickerCallback)
-            .build();
-        picker.setVisible(true);
-    } else {
-        console.error("Google Picker API is not ready.");
-    }
-}
+      console.log("Creating Google Picker with OAuth Token...");
 
-function pickerCallback(data) {
+      const picker = new google.picker.PickerBuilder()
+        .addView(google.picker.ViewId.DOCS)
+        .setOAuthToken(oauthToken)
+        .setDeveloperKey(PICKER_API_KEY)
+        .setOrigin(window.location.origin)
+        .setCallback(pickerCallback)
+        .build();
+      picker.setVisible(true);
+    } else {
+      console.error("Google Picker API is not ready.");
+    }
+  }
+
+  function pickerCallback(data) {
     console.log("Picker Callback triggered. Data received:", data);
     if (data.action === google.picker.Action.PICKED) {
-        const fileId = data.docs[0].id;
-        const fileName = data.docs[0].name;
-        console.log(`File selected. ID: ${fileId}, Name: ${fileName}`);
-        fetchGoogleDriveFile(fileId, fileName);
+      const fileId = data.docs[0].id;
+      const fileName = data.docs[0].name;
+      console.log(`File selected. ID: ${fileId}, Name: ${fileName}`);
+      fetchGoogleDriveFile(fileId, fileName);
     } else if (data.action === google.picker.Action.CANCEL) {
-        console.log("Google Drive file selection canceled.");
+      console.log("Google Drive file selection canceled.");
     }
-}
+  }
 
-// Fetch file from Google Drive and add to list (without uploading yet)
-async function fetchGoogleDriveFile(fileId, fileName) {
-  const accessToken = oauthToken;
+  // Fetch file from Google Drive and add to list (without uploading yet)
+  async function fetchGoogleDriveFile(fileId, fileName) {
+    const accessToken = oauthToken;
 
-  try {
-      const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          method: 'GET',
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          method: "GET",
           headers: {
-              Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
-      });
+        }
+      );
 
       if (response.ok) {
-          const blob = await response.blob();
-          const mimeType = response.headers.get("Content-Type");
-          const fileExtension = getFileExtensionFromMimeType(mimeType);
-          const fullFileName = fileName.includes('.') ? fileName : `${fileName}${fileExtension}`;
+        const blob = await response.blob();
+        const mimeType = response.headers.get("Content-Type");
+        const fileExtension = getFileExtensionFromMimeType(mimeType);
+        const fullFileName = fileName.includes(".")
+          ? fileName
+          : `${fileName}${fileExtension}`;
 
-          // Convert blob to File object
-          const googleDriveFile = new File([blob], fullFileName, { type: mimeType });
+        // Convert blob to File object
+        const googleDriveFile = new File([blob], fullFileName, {
+          type: mimeType,
+        });
 
-          // Add file to UI list
-          addGoogleDriveFileToList(googleDriveFile, fullFileName);
+        // Add file to UI list
+        addGoogleDriveFileToList(googleDriveFile, fullFileName);
 
-          // Store in filesToUpload array for later upload
-          filesToUpload.push({ fileBlob: googleDriveFile, fileName: fullFileName, isGoogleDrive: true });
-          console.log(`File ${fullFileName} added to upload queue.`);
-
+        // Store in filesToUpload array for later upload
+        filesToUpload.push({
+          fileBlob: googleDriveFile,
+          fileName: fullFileName,
+          isGoogleDrive: true,
+        });
+        console.log(`File ${fullFileName} added to upload queue.`);
       } else {
-          console.error("Error fetching the file from Google Drive.");
+        console.error("Error fetching the file from Google Drive.");
       }
-  } catch (error) {
+    } catch (error) {
       console.error("Error during fetching the file:", error);
-  }
-}
-
-// Function to determine file extension from MIME type
-function getFileExtensionFromMimeType(mimeType) {
-    switch (mimeType) {
-        case 'image/png': return '.png';
-        case 'image/jpg':
-        case 'image/jpeg': return '.jpg';
-        case 'image/gif': return '.gif';
-        case 'application/pdf': return '.pdf';
-        case 'text/plain': return '.txt';
-        default: return '';
     }
-}
+  }
 
-// Add the Google Drive file to the UI list
-function addGoogleDriveFileToList(blob, fileName) {
+  // Function to determine file extension from MIME type
+  function getFileExtensionFromMimeType(mimeType) {
+    switch (mimeType) {
+      case "image/png":
+        return ".png";
+      case "image/jpg":
+      case "image/jpeg":
+        return ".jpg";
+      case "image/gif":
+        return ".gif";
+      case "application/pdf":
+        return ".pdf";
+      case "text/plain":
+        return ".txt";
+      default:
+        return "";
+    }
+  }
+
+  // Add the Google Drive file to the UI list
+  function addGoogleDriveFileToList(blob, fileName) {
     const fileListToday = document.getElementById("file-list-today");
     const fileUrl = URL.createObjectURL(blob);
 
@@ -736,12 +757,98 @@ function addGoogleDriveFileToList(blob, fileName) {
     // Close button to remove the file before upload
     const closeIcon = listItem.querySelector(".icon.close");
     if (closeIcon) {
-        closeIcon.addEventListener("click", () => {
-            filesToUpload = filesToUpload.filter((f) => f.fileName !== fileName);
-            listItem.remove();
-            console.log(`File removed: ${fileName}`);
-        });
+      closeIcon.addEventListener("click", () => {
+        filesToUpload = filesToUpload.filter((f) => f.fileName !== fileName);
+        listItem.remove();
+        console.log(`File removed: ${fileName}`);
+      });
     }
-}
+  }
 
+  selectFromURL.addEventListener("click", () => {
+    urlUploadModal.classList.add("visible");
+    modalBackdrop.classList.add("visible");
+    imageUrlInput.value = ""; // Reset input
+  });
+
+  // Close Modal on backdrop or close button
+  modalBackdrop.addEventListener("click", closeModal);
+  closeUrlModal.addEventListener("click", closeModal);
+
+  function closeModal() {
+    urlUploadModal.classList.remove("visible");
+    modalBackdrop.classList.remove("visible");
+  }
+
+  // Handle URL Submission
+  submitImageUrl.addEventListener("click", async () => {
+    const imageUrl = imageUrlInput.value.trim();
+    if (!imageUrl) {
+      alert("Bitte eine gültige Bild-URL eingeben.");
+      return;
+    }
+  
+    try {
+      // Fetch the image
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error("Bild konnte nicht geladen werden.");
+  
+      const blob = await response.blob();
+      const mimeType = blob.type || "image/jpeg"; // Fallback if type is undefined
+      const fileName = imageUrl.split("/").pop().split("?")[0] || "image.jpg";
+  
+      // Convert blob to File object with proper MIME type
+      const file = new File([blob], fileName, { type: mimeType });
+  
+      // Add to UI list
+      addURLFileToList(file, imageUrl);
+  
+      // Store in filesToUpload with correct structure
+      filesToUpload.push({
+        fileBlob: file,      // The actual File object
+        fileName: file.name, // Name for reference
+        isURL: true,         // Flag indicating URL source
+        mimeType: mimeType   // Include MIME type
+      });
+  
+      closeModal();
+      console.log(`URL-Datei ${fileName} erfolgreich hinzugefügt.`);
+    } catch (error) {
+      alert(`Fehler beim Laden des Bildes: ${error.message}`);
+      console.error("Fehler beim Laden der Bild-URL:", error);
+    }
+  });
+
+  // Add URL Image to UI List
+  function addURLFileToList(file, imageUrl) {
+    const listItem = document.createElement("li");
+    listItem.className = "file-item";
+    listItem.innerHTML = `
+    <div class="file-info">
+      <img class="prev-pic" src="${imageUrl}" alt="preview">
+      <p class="filename">${file.name}</p>
+    </div>
+    <p class="timestamp">Ausstehend</p>
+    <div class="file-actions">
+      <span class="icon close">close</span>
+      <span class="icon delete inactive">delete</span>
+      <span class="icon download inactive">download</span>
+    </div>
+    <div class="file-progress hidden">
+      <div class="progress-container">
+        <div class="progress-bar"></div>
+      </div>
+    </div>
+  `;
+
+    fileListToday.appendChild(listItem);
+
+    // Close button to remove file
+    const closeIcon = listItem.querySelector(".icon.close");
+    closeIcon.addEventListener("click", () => {
+      filesToUpload = filesToUpload.filter((f) => f.fileName !== file.name);
+      listItem.remove();
+      console.log(`Datei entfernt: ${file.name}`);
+    });
+  }
 });
