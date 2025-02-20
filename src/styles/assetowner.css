@@ -77,6 +77,12 @@ main {
         background: var(--color-purple);
         border: none;
         border-radius: 5px;
+        transition: background 0.3s ease;
+
+        &:hover {
+            background: var(--color-purple-dark);
+            cursor: pointer;
+        }
     }
 
     .upload-options {
@@ -125,6 +131,12 @@ input[type="file"] {
     border: none;
     border-radius: 5px;
     margin-bottom: var(--xxxl);
+    transition: background 0.3s ease;
+
+    &:hover {
+        background: var(--color-purple-dark);
+        cursor: pointer;
+    }
 }
 
 .file-view > button {
@@ -136,6 +148,12 @@ input[type="file"] {
     border: none;
     border-radius: 5px;
     margin-top: 25px;
+    transition: background 0.3s ease;
+
+    &:hover {
+        background: var(--color-purple-dark);
+        cursor: pointer;
+    }
 }
 
 .file-list-today {

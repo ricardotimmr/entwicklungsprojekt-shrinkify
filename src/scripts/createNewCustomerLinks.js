@@ -220,12 +220,16 @@ function addCardToCustomer(card, customerId) {
 
     const isExpired = expirationDate < today;
 
+    const truncateText = (text, maxLength = 25) => {
+        return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+      };
+
     const cardHTML = `
         <div class="card" data-id="${card.id}">
             <div class="project">
                 <h3>${card.name}</h3>
                 <div class="project-link">
-                    <a href="${card.url || '#'}">${card.url || 'Keine URL angegeben'}</a>
+                    <a href="${card.url || '#'}" target="_blank" rel="noopener noreferrer">${truncateText(card.url || 'Keine URL angegeben')}</a>
                     <span class="icon delete-card" data-card-id="${card.id}">delete</span> 
                 </div>
             </div>
@@ -265,4 +269,3 @@ function addCardToCustomer(card, customerId) {
     const deleteButton = customerLinks.querySelector(`.delete-card[data-card-id='${card.id}']`);
     deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
-

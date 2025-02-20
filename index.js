@@ -68,8 +68,10 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS images (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_path TEXT NOT NULL,
-        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        card_id INTEGER NOT NULL,
+        FOREIGN KEY (card_id) REFERENCES customer_links(id) ON DELETE CASCADE
+        );
     `);
 });
 
@@ -93,16 +95,16 @@ const uploadDir = path.resolve(__dirname, "../uploads");
 const compressedDir = path.resolve(__dirname, "../compressed");
 
 // Beispiel zum Speichern eines Bildpfads in der SQLite-Datenbank
-const saveImage = (filePath) => {
-  const sql = "INSERT INTO images (file_path) VALUES (?)";
-  db.run(sql, [filePath], (err) => {
-    if (err) {
-      console.error("Fehler beim Speichern des Bildes:", err.message);
-    } else {
-      console.log("Bild erfolgreich in der Datenbank gespeichert.");
-    }
-  });
-};
+const saveImage = (filePath, cardId) => {
+    const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
+    db.run(sql, [filePath, cardId], (err) => {
+      if (err) {
+        console.error("Fehler beim Speichern des Bildes:", err.message);
+      } else {
+        console.log("Bild erfolgreich in der Datenbank gespeichert für cardId:", cardId);
+      }
+    });
+  };
 
 const deleteImage = (filePath) => {
   const sql = "DELETE FROM images WHERE file_path = ?";
@@ -317,62 +319,74 @@ app.delete('/cards/:cardId', (req, res) => {
 app.use(express.static(path.join(__dirname, "src")));
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  console.log("Upload gestartet...");
-
-  if (!req.file) {
-    console.error("Keine Datei hochgeladen.");
-    return res.status(400).json({ message: "Keine Datei hochgeladen." });
-  }
-
-  const inputFile = req.file.path;
-  const outputFileName = `${req.file.originalname.split(".")[0]}.jpeg`; // Originalname ohne zufällige Zahl
-  const outputFilePath = path.resolve(compressedDir, outputFileName);
-
-  console.log("Hochgeladene Datei:", inputFile);
-  console.log("Speicherort der komprimierten Datei:", outputFilePath);
-
-  try {
-    const metadata = await sharp(inputFile).metadata();
-    console.log("Bild-Metadaten:", metadata);
-
-    const newWidth = Math.round(metadata.width * 0.8);
-    const newHeight = Math.round(metadata.height * 0.8);
-    console.log(`Neue Größe: ${newWidth}x${newHeight}`);
-
-    await sharp(inputFile)
-      .resize(newWidth, newHeight)
-      .jpeg({ quality: 80 })
-      .toFile(outputFilePath)
-      .then(() => {
-        console.log("✅ Bild gespeichert:", outputFilePath);
-
-        // Bildpfad in der DB speichern
-        saveImage(`/compressed/${outputFileName}`);
-
-        // Überprüfen, ob die Datei existiert
+    console.log("Upload gestartet...");
+  
+    const { cardId } = req.body;
+  
+    if (!req.file) {
+      console.error("Keine Datei hochgeladen.");
+      return res.status(400).json({ message: "Keine Datei hochgeladen." });
+    }
+  
+    if (!cardId) {
+      console.error("Fehlende cardId.");
+      return res.status(400).json({ message: "Fehlende cardId." });
+    }
+  
+    const inputFile = req.file.path;
+    const outputFileName = `${Date.now()}-${req.file.originalname.split(".")[0]}.jpeg`; // Keep original name with timestamp
+    const outputFilePath = path.resolve(compressedDir, outputFileName);
+  
+    console.log("Hochgeladene Datei:", inputFile);
+    console.log("Speicherort der komprimierten Datei:", outputFilePath);
+  
+    try {
+      // Get metadata for resizing
+      const metadata = await sharp(inputFile).metadata();
+      console.log("Bild-Metadaten:", metadata);
+  
+      const newWidth = Math.round(metadata.width * 0.8);
+      const newHeight = Math.round(metadata.height * 0.8);
+      console.log(`Neue Größe: ${newWidth}x${newHeight}`);
+  
+      // Resize and compress the image
+      await sharp(inputFile)
+        .resize(newWidth, newHeight)
+        .jpeg({ quality: 80 })
+        .toFile(outputFilePath);
+  
+      console.log("✅ Bild gespeichert:", outputFilePath);
+  
+      // Save image path with cardId in the DB
+      const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
+      db.run(sql, [`/compressed/${outputFileName}`, cardId], (err) => {
+        if (err) {
+          console.error("❌ Fehler beim Speichern des Bildes in der DB:", err.message);
+          return res.status(500).json({ message: "Fehler beim Speichern des Bildes." });
+        }
+  
+        // Verify file exists after saving
         if (fs.existsSync(outputFilePath)) {
           console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
         } else {
           console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
         }
-      })
-      .catch((err) => console.error("❌ Fehler beim Speichern:", err));
-
-    console.log("Bild erfolgreich gespeichert:", outputFilePath);
-
-    res.status(200).json({
-      message: "Datei erfolgreich komprimiert.",
-      compressed: {
-        name: outputFileName,
-        path: `/compressed/${outputFileName}`, // Der Pfad zur komprimierten Datei
-        size: fs.statSync(outputFilePath).size,
-      },
-    });
-  } catch (error) {
-    console.error("Fehler bei der Bildverarbeitung:", error);
-    res.status(500).json({ message: "Fehler bei der Komprimierung." });
-  }
-});
+  
+        // Respond with success and file details
+        res.status(200).json({
+          message: "Datei erfolgreich hochgeladen und komprimiert.",
+          compressed: {
+            name: outputFileName,
+            path: `/compressed/${outputFileName}`,
+            size: fs.statSync(outputFilePath).size,
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Fehler bei der Bildverarbeitung:", error);
+      res.status(500).json({ message: "Fehler bei der Komprimierung." });
+    }
+  });  
 
 
 app.delete("/delete", express.json(), (req, res) => {
@@ -405,12 +419,23 @@ app.delete("/delete", express.json(), (req, res) => {
 });
 
 
-app.get("/images", (req, res) => {
-  getImages((images) => {
-    res.json(images);
+app.get("/images/:cardId", (req, res) => {
+    const { cardId } = req.params;
+  
+    const sql = "SELECT * FROM images WHERE card_id = ?";
+    db.all(sql, [cardId], (err, rows) => {
+      if (err) {
+        return res.status(500).json({ message: "Fehler beim Abrufen der Bilder." });
+      }
+      res.json(rows);
+    });
   });
-});
 
+  app.get("/images", (req, res) => {
+    getImages((images) => {
+      res.json(images);
+    });
+  });
 
 // Statische Dateien bereitstellen
 app.use("/compressed", express.static(compressedDir));
