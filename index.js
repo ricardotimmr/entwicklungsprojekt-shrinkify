@@ -212,7 +212,7 @@ app.post('/cards', (req, res) => {
         const cardId = this.lastID;
 
         // Generate token and personalized link
-        const payload = { cardId, customerId };
+        const payload = { cardId, customerId, projectName: name };
         const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '7d' });
         const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
 
@@ -232,7 +232,7 @@ app.post('/cards', (req, res) => {
                     max_file_size: maxFileSize,
                     compression_level: compressionLevel,
                     expiration_date: expirationDate,
-                    credits,  // Return credits
+                    credits,
                     url: personalizedLink
                 }
             });

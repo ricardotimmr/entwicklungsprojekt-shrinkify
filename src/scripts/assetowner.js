@@ -30,6 +30,13 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Token ist gültig. Daten:", data);
         cardId = data.data.cardId;
         console.log("Extrahierte Karten-ID:", cardId);
+
+        const projectName = data.data.projectName || "Projektname";
+        const projectTitleElement = document.querySelector(".overview h2");
+        if (projectTitleElement) {
+          projectTitleElement.textContent = projectName;
+        }
+
         loadImages(cardId);
 
         // Fetch card details and update settings container
