@@ -129,6 +129,7 @@ const upload = multer({
       ? cb(null, true)
       : cb(new Error("Nur JPEG und PNG erlaubt."));
   },
+});
 
 // Customer Routes
 // Create a new customer
