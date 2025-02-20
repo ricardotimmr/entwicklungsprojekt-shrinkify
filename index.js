@@ -333,60 +333,86 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ message: "Fehlende cardId." });
     }
   
-    const inputFile = req.file.path;
-    const outputFileName = `${Date.now()}-${req.file.originalname.split(".")[0]}.jpeg`; // Keep original name with timestamp
-    const outputFilePath = path.resolve(compressedDir, outputFileName);
+    // Fetch card settings
+    const sql = "SELECT * FROM customer_links WHERE id = ?";
+    db.get(sql, [cardId], async (err, card) => {
+      if (err || !card) {
+        console.error("Fehler beim Abrufen der Karteneinstellungen:", err);
+        return res.status(500).json({ message: "Fehler beim Abrufen der Karteneinstellungen." });
+      }
   
-    console.log("Hochgeladene Datei:", inputFile);
-    console.log("Speicherort der komprimierten Datei:", outputFilePath);
+      const maxFileSizeBytes = parseInt(card.max_file_size) * 1024 * 1024;
+      const compressionLevel = parseInt(card.compression_level) || 75;
+      const outputFormat = card.file_format.replace('.', '') || 'jpeg';
+      const expDate = new Date(card.expiration_date);
+      const today = new Date();
   
-    try {
-      // Get metadata for resizing
-      const metadata = await sharp(inputFile).metadata();
-      console.log("Bild-Metadaten:", metadata);
+      if (today > expDate) {
+        console.error("Der Link ist abgelaufen.");
+        return res.status(400).json({ message: "Der Link ist abgelaufen." });
+      }
   
-      const newWidth = Math.round(metadata.width * 0.8);
-      const newHeight = Math.round(metadata.height * 0.8);
-      console.log(`Neue Größe: ${newWidth}x${newHeight}`);
+      if (req.file.size > maxFileSizeBytes) {
+        console.error("Datei überschreitet die maximale Größe.");
+        return res.status(400).json({ message: "Datei überschreitet die maximale Größe." });
+      }
   
-      // Resize and compress the image
-      await sharp(inputFile)
-        .resize(newWidth, newHeight)
-        .jpeg({ quality: 80 })
-        .toFile(outputFilePath);
+      const inputFile = req.file.path;
+      const outputFileName = `${Date.now()}-${req.file.originalname.split(".")[0]}.${outputFormat}`;
+      const outputFilePath = path.resolve(compressedDir, outputFileName);
   
-      console.log("✅ Bild gespeichert:", outputFilePath);
+      console.log("Hochgeladene Datei:", inputFile);
+      console.log("Speicherort der komprimierten Datei:", outputFilePath);
   
-      // Save image path with cardId in the DB
-      const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
-      db.run(sql, [`/compressed/${outputFileName}`, cardId], (err) => {
-        if (err) {
-          console.error("❌ Fehler beim Speichern des Bildes in der DB:", err.message);
-          return res.status(500).json({ message: "Fehler beim Speichern des Bildes." });
-        }
+      try {
+        // Get metadata for resizing
+        const metadata = await sharp(inputFile).metadata();
+        console.log("Bild-Metadaten:", metadata);
   
-        // Verify file exists after saving
-        if (fs.existsSync(outputFilePath)) {
-          console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
-        } else {
-          console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
-        }
+        // Example logic: Resize the image to 80% of original dimensions
+        const newWidth = Math.round(metadata.width * 0.8);
+        const newHeight = Math.round(metadata.height * 0.8);
+        console.log(`Neue Größe: ${newWidth}x${newHeight}`);
   
-        // Respond with success and file details
-        res.status(200).json({
-          message: "Datei erfolgreich hochgeladen und komprimiert.",
-          compressed: {
-            name: outputFileName,
-            path: `/compressed/${outputFileName}`,
-            size: fs.statSync(outputFilePath).size,
+        // Resize, apply compression, and convert format
+        await sharp(inputFile)
+          .resize(newWidth, newHeight) // Resizing based on metadata
+          .toFormat(outputFormat, { quality: compressionLevel }) // Apply compression and format
+          .toFile(outputFilePath);
+  
+        console.log("✅ Bild gespeichert:", outputFilePath);
+  
+        // Save image path with cardId in the DB
+        db.run("INSERT INTO images (file_path, card_id) VALUES (?, ?)", [`/compressed/${outputFileName}`, cardId], (err) => {
+          if (err) {
+            console.error("❌ Fehler beim Speichern des Bildes in der DB:", err.message);
+            return res.status(500).json({ message: "Fehler beim Speichern des Bildes." });
           }
+  
+          // Verify file exists after saving
+          if (fs.existsSync(outputFilePath)) {
+            console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
+          } else {
+            console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
+          }
+  
+          // Respond with success and file details
+          res.status(200).json({
+            message: "Datei erfolgreich hochgeladen und komprimiert.",
+            compressed: {
+              name: outputFileName,
+              path: `/compressed/${outputFileName}`,
+              size: fs.statSync(outputFilePath).size,
+            }
+          });
         });
-      });
-    } catch (error) {
-      console.error("Fehler bei der Bildverarbeitung:", error);
-      res.status(500).json({ message: "Fehler bei der Komprimierung." });
-    }
-  });  
+      } catch (error) {
+        console.error("Fehler bei der Bildverarbeitung:", error);
+        res.status(500).json({ message: "Fehler bei der Komprimierung." });
+      }
+    });
+  });
+   
 
 
 app.delete("/delete", express.json(), (req, res) => {
@@ -436,6 +462,24 @@ app.get("/images/:cardId", (req, res) => {
       res.json(images);
     });
   });
+
+  // Fetch specific card by cardId
+app.get('/cards/:cardId', (req, res) => {
+    const { cardId } = req.params;
+
+    const query = `SELECT * FROM customer_links WHERE id = ?`;
+    db.get(query, [cardId], (err, row) => {
+        if (err) {
+            console.error("Fehler beim Abrufen der Karte:", err.message);
+            return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
+        }
+        if (!row) {
+            return res.status(404).json({ success: false, message: "Karte nicht gefunden." });
+        }
+        res.status(200).json({ success: true, card: row });
+    });
+});
+
 
 // Statische Dateien bereitstellen
 app.use("/compressed", express.static(compressedDir));
