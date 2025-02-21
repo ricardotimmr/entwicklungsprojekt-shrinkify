@@ -297,22 +297,26 @@ document.addEventListener("DOMContentLoaded", function () {
         continue; // Skip file
       }
 
-      const progressContainer = Array.from(
-        document.querySelectorAll(".file-item")
-      ).find(
-        (item) =>
-          item.querySelector(".filename").textContent === file.fileName ||
-          file.name
-      );
-
-      if (!progressContainer) {
-        console.error(
-          `No progressContainer found for file ${file.fileName || file.name}`
-        );
-        continue;
-      }
-
-      const progressBar = progressContainer.querySelector(".progress-bar");
+      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
+            .find(item => item.querySelector(".filename").textContent === file.name);
+      
+          if (!progressContainer) {
+            console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
+            continue;
+          }
+      
+          const progressBar = progressContainer.querySelector(".progress-bar");
+      
+          try {
+            await uploadFile(file, progressBar, progressContainer);
+            updateFileStatus(file.name, "Erfolgreich hochgeladen");
+          } catch (error) {
+            updateFileStatus(file.name, "Fehler beim Upload", true);
+          }
+        
+      
+        filesToUpload = [];
+      
 
       try {
         const uploadResponse = await uploadFile(
