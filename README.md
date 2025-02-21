@@ -23,7 +23,7 @@ Für eine einfache Orientierung im Code folgt eine Übersicht der wichtigsten Da
 
 ## Technologie-Stack
 
-- **Frontend**: HTML, CSS,  JavaScript, Jetpack Compose 
+- **Frontend**: HTML, CSS,  JavaScript
 - **Backend**: Node.js, Express.js  
 - **Upload**: Multer, Google Drive,  Dropbox
 - **Dateiverarbeitung (Komprimierung)**: Sharp
