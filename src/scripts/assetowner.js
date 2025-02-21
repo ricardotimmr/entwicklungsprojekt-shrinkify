@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileListToday = document.getElementById("file-list-today");
   const fileListOld = document.getElementById("file-list-old");
   const startUploadButton = document.getElementById("start-upload");
+  const dropArea = document.getElementById("drop-area");
 
   const dropboxButton = document.getElementById("selectFromDropBox");
 
@@ -146,6 +147,27 @@ document.addEventListener("DOMContentLoaded", function () {
   browseButton.addEventListener("click", function () {
     fileInput.click();
   });
+
+  //Event-Listener für Drag & Drop Funktionalität
+  dropArea.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropArea.classList.add("dragover"); // Optische Hervorhebung
+  });
+
+  dropArea.addEventListener("dragleave", () => {
+    dropArea.classList.remove("dragover"); // Hervorhebung entfernen
+  });
+
+  dropArea.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropArea.classList.remove("dragover");
+
+  // Dateien aus Drag & Drop in fileInput setzen
+  fileInput.files = event.dataTransfer.files;
+
+  // Manuell das `change`-Event für fileInput auslösen
+  fileInput.dispatchEvent(new Event("change"));
+  }); 
 
   // Starte Upload automatisch nach Auswahl der Dateien
   fileInput.addEventListener("change", async function () {
