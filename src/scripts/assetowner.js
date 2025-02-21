@@ -298,14 +298,20 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const progressContainer = Array.from(document.querySelectorAll(".file-item"))
-            .find(item => item.querySelector(".filename").textContent === file.name);
+            .find(item => item.querySelector(".filename").textContent === (file.name || file.fileName));
       
           if (!progressContainer) {
             console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
             continue;
           }
-      
+          
+          const fileProgress = progressContainer.querySelector(".file-progress");
           const progressBar = progressContainer.querySelector(".progress-bar");
+
+          if (fileProgress && progressBar) {
+            fileProgress.classList.remove("hidden");
+            progressBar.style.width = "0%"; // Reset progress
+          }
       
           try {
             await uploadFile(file, progressBar, progressContainer);
