@@ -330,8 +330,6 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         );
 
-        updateFileStatus(actualFile.name, "Upload erfolgreich");
-
         // Safely check for remainingCredits
         if (uploadResponse && uploadResponse.remainingCredits !== undefined) {
           document.querySelector(
