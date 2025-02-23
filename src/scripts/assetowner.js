@@ -940,5 +940,31 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Fehler beim Senden:", error);
       alert("Ein Fehler ist aufgetreten.");
     }
+
+});
+
+document.getElementById('request-credits-btn').addEventListener('click', () => {
+  if (!cardId) {
+      alert("Fehler: Keine Karten-ID gefunden.");
+      return;
+  }
+
+  fetch('/request-credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardId })
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          alert("Anfrage für zusätzliches Guthaben gesendet.");
+      } else {
+          alert("Fehler beim Senden der Anfrage.");
+      }
+  })
+  .catch(err => {
+      console.error("Fehler beim Senden der Anfrage:", err);
+      alert("Ein Fehler ist aufgetreten.");
   });
+});
 });

@@ -81,6 +81,14 @@ db.serialize(() => {
         FOREIGN KEY (card_id) REFERENCES customer_links(id) ON DELETE CASCADE
         );
     `);
+
+    db.run(`CREATE TABLE IF NOT EXISTS credit_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      card_id INTEGER NOT NULL,
+      requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      status TEXT DEFAULT 'pending',
+      FOREIGN KEY (card_id) REFERENCES customer_links(id) ON DELETE CASCADE
+  )`);
 });
 
 app.get("/validate-token", (req, res) => {
@@ -567,6 +575,39 @@ app.post('/send-email', async (req, res) => {
         console.error('Fehler beim Senden der E-Mail:', error);
         res.status(500).json({ message: 'Fehler beim Senden der E-Mail.', error });
     }
+});
+
+app.post('/request-credits', (req, res) => {
+  const { cardId } = req.body;
+
+  if (!cardId) {
+      return res.status(400).json({ success: false, message: 'cardId is required' });
+  }
+
+  db.run(`INSERT INTO credit_requests (card_id) VALUES (?)`, [cardId], function(err) {
+      if (err) {
+          console.error("Error requesting credits:", err.message);
+          return res.status(500).json({ success: false, message: 'Error processing request' });
+      }
+
+      res.status(200).json({ success: true, message: 'Credit request sent' });
+  });
+});
+
+// API to fetch pending credit requests
+app.get('/credit-requests', (req, res) => {
+  db.all(`SELECT cr.id, cl.name AS link_name, cu.name AS customer_name 
+          FROM credit_requests cr
+          JOIN customer_links cl ON cr.card_id = cl.id
+          JOIN customers cu ON cl.customer_id = cu.id
+          WHERE cr.status = 'pending'`, [], (err, rows) => {
+      if (err) {
+          console.error("Error fetching credit requests:", err.message);
+          return res.status(500).json({ success: false, message: 'Error fetching requests' });
+      }
+
+      res.status(200).json({ success: true, requests: rows });
+  });
 });
 
 
