@@ -573,7 +573,6 @@ app.get('/credit-requests', (req, res) => {
   });
 });
 
-
 // Server starten
 app.listen(port, () => {
     console.log(`Server läuft unter http://localhost:${port}`);
