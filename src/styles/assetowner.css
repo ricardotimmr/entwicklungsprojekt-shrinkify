@@ -107,7 +107,7 @@ main {
 }
 
 input[type="file"] {
-    display: none; /* Verstecke das Standard-Dateiauswahlfeld */
+    display: none;
 }
 
 .file-view {
@@ -219,7 +219,6 @@ input[type="file"] {
     overflow: hidden;
 }
 
-/* Toast Container */
 #toastContainer {
     position: fixed;
     bottom: 20px;
@@ -230,7 +229,6 @@ input[type="file"] {
     z-index: 1000;
 }
 
-/* Toast Nachricht */
 .toast {
     background-color: #007BFF;
     color: white;
@@ -240,12 +238,10 @@ input[type="file"] {
     animation: slideIn 0.5s ease, fadeOut 0.5s ease 1.5s forwards;
 }
 
-/* Fehlermeldungen */
 .toast.error {
     background-color: #ff4c4c;
 }
 
-/* Animationen */
 @keyframes slideIn {
     from {
         transform: translateX(100%);
@@ -271,7 +267,6 @@ input[type="file"] {
     color: var(--color-grey);
 }
 
-/* Button-Styling */
 .dropdown-btn {
     border: none;
     background: none;
@@ -284,7 +279,6 @@ input[type="file"] {
     padding-top: var(--m);
 }
 
-/* Dropdown-Liste verstecken */
 .dropdown-content {
     display: none;
     padding: 10px 0;
@@ -293,18 +287,15 @@ input[type="file"] {
     font-weight: var(--fw-bold);
 }
 
-/* Dropdown-Elemente */
 .dropdown-content li {
     padding: 8px 15px;
     border-bottom: 1px solid var(--color-grey-light);
 }
 
-/* Letztes Element ohne Linie */
 .dropdown-content li:last-child {
     border-bottom: none;
 }
 
-/* Sichtbarkeit aktivieren */
 .show {
     display: block;
 }
@@ -443,13 +434,13 @@ input[type="file"] {
   }  
 
   #request-credits-btn {
-    all: unset; /* Remove default button styles */
-    color: var(--color-blue-light); /* Apply the blue color */
+    all: unset;
+    color: var(--color-blue-light);
     font-size: var(--fs-s);
-    cursor: pointer; /* Pointer cursor */
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px; /* Space between icon and text */
+    gap: 5px;
     margin-top: 5px;
     
     &:hover {

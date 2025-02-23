@@ -48,7 +48,7 @@ header {
                 font-size: var(--fs-m);
                 font-weight: var(--fw-bold);
                 color: var(--color-white);
-                padding-right: 30px; /* Space for the icon */
+                padding-right: 30px;
         
                 &::placeholder {
                     color: var(--color-purple-dark);
@@ -226,8 +226,6 @@ header {
     }
 }
 
-
-/* Add blur effect to the background */
 body.blur-active::before {
     content: "";
     position: fixed;
@@ -240,7 +238,6 @@ body.blur-active::before {
     z-index: 999;
 }
 
-/* New Customer Form */
 #new-customer-form {
     display: none;
     position: fixed;
@@ -308,7 +305,6 @@ body.blur-active::before {
     }
 }
 
-/* New Link Form */
 #new-link-form {
     display: none;
     position: fixed;
@@ -329,7 +325,6 @@ body.blur-active::before {
     text-align: center;
   }
   
-  /* Input Field */
   #new-link-form input[type="text"] {
     width: 80%;
     padding: 12px;
@@ -345,7 +340,6 @@ body.blur-active::before {
     color: var(--color-purple-dark);
   }
   
-  /* Submit Button */
   #submit-link {
     width: 87%;
     padding: 12px;
@@ -363,7 +357,6 @@ body.blur-active::before {
     background-color: var(--color-red);
   }
   
-  /* Close Button */
   #new-link-form .close-btn {
     position: absolute;
     top: 12px;
@@ -379,7 +372,6 @@ body.blur-active::before {
     color: var(--color-red);
   }
   
-  /* Blur Effect on Background */
   body.blur-active::before {
     content: "";
     position: fixed;
@@ -407,33 +399,33 @@ body.blur-active::before {
     cursor: pointer;
     z-index: 9999;
     transition: width 0.3s ease, height 0.3s ease;
-    overflow: hidden; /* Hide credit alerts in collapsed state */
+    overflow: hidden;
 }
 
 .credit-alerts.expanded {
-    width: 400px; /* Increased width */
+    width: 400px;
     height: auto;
-    max-height: 600px; /* More space for alerts */
+    max-height: 600px;
     overflow-y: auto;
     border-radius: 8px;
     padding: 10px;
     background-color: #f9f9f9;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    flex-direction: column; /* Stack credit alerts vertically */
-    align-items: flex-start; /* Align items to the left */
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .credit-alert {
-    border-bottom: 1px solid #ddd; /* Thinner line */
+    border-bottom: 1px solid #ddd;
     padding: 10px 0;
-    font-size: 14px; /* Smaller font size */
-    display: none; /* Hidden by default */
-    width: 100%; /* Full width in expanded view */
+    font-size: 14px;
+    display: none;
+    width: 100%;
     word-wrap: break-word;
 }
 
 .credit-alerts.expanded .credit-alert {
-    display: block; /* Show when expanded */
+    display: block;
 }
 
 .credit-alert:last-child {
@@ -454,7 +446,6 @@ body.blur-active::before {
     display: none;
 }
 
-/* Improved spacing for credit alerts */
 .credit-alerts.expanded .credit-alert {
     margin-bottom: 6px;
 }

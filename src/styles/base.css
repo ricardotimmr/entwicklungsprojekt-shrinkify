@@ -80,8 +80,6 @@ img {
   height: auto;
 }
 
-/* footer */
-
 .footer {
   padding: 40px 80px;
   background-color: var(--color-purple-dark);
@@ -140,7 +138,7 @@ img {
   .divider {
       margin: 20px 0;
       border: 0;
-      border-top: 1px solid var(--color-purple); /* Fine line */
+      border-top: 1px solid var(--color-purple);
   }
 
   .copyright {

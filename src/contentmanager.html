@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="de">
     <head>
+        <!-- Meta-Informationen und Stylesheets -->
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Contentmanager-page</title>
 
+        <!-- Externe Stylesheets -->
         <link rel="stylesheet" href="styles/combined.css">
         <link rel="stylesheet" href="styles/contentmanager.css">
     </head>
 
     <body>
+        <!-- Header mit Navigation -->
         <header>
             <h1>shrinkify.</h1>  
             <ul>
@@ -18,14 +21,15 @@
                 <li><a href="contentmanager.html">Login</a></li>
             </ul>
         </header>
+
         <main>
+            <!-- Bereich für Kredit-Benachrichtigungen -->
+            <div id="credit-alerts" class="credit-alerts"></div>
 
-            <div id="credit-alerts" class="credit-alerts">
-                <!-- Dynamically populated alerts -->
-            </div>
-
+            <!-- Hauptbereich für Content-Manager-Optionen -->
             <section class="contentmanager-options">
 
+                <!-- Aktionen: Kundenübersicht, Suche, Neuer Kunde -->
                 <div class="actions">
                     <h2>Übersicht</h2>
                     <nav>
@@ -33,11 +37,11 @@
                             <input type="text" id="customer-search" class="search" placeholder="Suche nach Kunden...">
                             <span class="icon">search</span>
                         </div>
-                    
                         <button id="new-customer-button" class="new-customer">Neuer Kunde <span class="icon">add</span></button>
                     </nav>
                 </div>
 
+                <!-- Formular zum Hinzufügen eines neuen Kunden -->
                 <div id="new-customer-form" style="display: none;">
                     <span class="close-btn" onclick="document.getElementById('new-customer-form').style.display = 'none';">&times;</span>
                     <input type="text" id="customer-name" placeholder="Kundenname" />
@@ -45,74 +49,34 @@
                     <button id="submit-customer" class="submit-customer">Kunde erstellen</button>
                 </div>
 
+                <!-- Formular zum Erstellen eines neuen Links -->
                 <div id="new-link-form" style="display: none;">
                     <span class="close-btn" onclick="closeNewLinkForm();">&times;</span>
                     <input type="text" id="project-name" placeholder="Projektname" />
                     <button id="submit-link">Karte erstellen</button>
                 </div>
 
+                <!-- Kundenliste -->
                 <div class="customer-list">
-
                     <div class="customer" data-id="1">
-
+                        <!-- Kundenname mit aufklappbarer Karte -->
                         <div class="customer-name">
                             <button class="customer-button" onclick="toggleCard(this)">MediaFlare</button>
                             <span class="icon">download</span>
                         </div>
 
-                        <div class="customer-links" style="display: none;">
-
-                        <!-- <div class="card">
-
-                            <div id="new-project-form" style="display: none;">
-                                <span class="close-btn" onclick="document.getElementById('new-project-form').style.display = 'none';">&times;</span>
-                                <input type="text" id="project-name" placeholder="Projektname" />
-                                <input type="text" id="project-name" placeholder="Projektname" />
-                                <button id="submit-project" class="submit-project">Projekt erstellen</button>
-                            </div>
-
-                            <div class="project">
-                                <h3>Projektname-1</h3>
-                                <div class="project-link">
-                                    <a href="/">https:/shrinkify.de/Projekt-1/...</a>
-                                    <span class="icon">delete</span>
-                                </div>
-                            </div>
-
-                            <div class="settings">
-                                <form class="setting-1">
-                                    <label for="fformat">Dateiformat</label>
-                                    <select class="fformat" name="fformat">
-                                        <option value=".jpg">.jpg</option>
-                                        <option value=".png">.png</option>
-                                    </select>
-                                    <label for="fsize">Dateigröße (max.)</label>
-                                    <input type="text" placeholder="50 MB" class="fsize" name="fsize">
-                                 </form>
-                                 <form class="setting-2">
-                                    <label for="dcompression">Komprimierungsgrad</label>
-                                    <input type="text" placeholder="80%" class="dcompression" name="dcompression">
-                                 </form>
-                                 <form class="setting-3">
-                                    <label for="edate">Ablaufdatum des Links</label>
-                                    <input type="date" class="edate" name="edate">
-                                    <label for="credits">Guthaben Anzeige</label>
-                                    <input type="text" placeholder="6 Credits" class="credits" name="credits">
-                                 </form>
-                            </div>
-                            
-                        </div> -->
-                        </div>
+                        <div class="customer-links" style="display: none;"></div>
 
                         <a href="javascript:void(0);" class="new-link" onclick="openNewLinkForm('1')">
                             <p>Neuer Link</p>
                             <span class="icon">add</span>
                         </a>
-
                     </div>
                 </div>
             </section>
         </main>
+
+        <!-- Footer mit allgemeinen Informationen -->
         <footer class="footer">
             <div class="footer-content">
                 <div class="left">
@@ -130,6 +94,9 @@
                 <p>&#169; 2025 shrinkify. All rights reserved.</p>
             </div>
         </footer>
+
+        <!-- Externe Skripte für Kunden- und Link-Management -->
         <script src="/src/scripts/createNewCustomerLinks.js"></script>
         <script src="/src/scripts/createNewCustomer.js"></script>
     </body>
+</html>
