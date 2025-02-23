@@ -1,40 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialisiert und setzt Event-Listener nach dem Laden des DOMs
+  const alertContainer = document.getElementById("credit-alerts");
 
-  const alertContainer = document.getElementById('credit-alerts');
+  alertContainer.innerHTML = `<div class="alert-icon">⚠️</div>`;
 
-    // Add icon to the alert container
-    alertContainer.innerHTML = `<div class="alert-icon">⚠️</div>`;
+  alertContainer.addEventListener("click", (e) => {
+    alertContainer.classList.toggle("expanded");
+    e.stopPropagation();
+  });
 
-    // Toggle expand/collapse on click
-    alertContainer.addEventListener('click', (e) => {
-        alertContainer.classList.toggle('expanded');
-        e.stopPropagation(); // Prevent unwanted clicks outside
-    });
-
-    // Close the expanded alert when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!alertContainer.contains(e.target) && alertContainer.classList.contains('expanded')) {
-            alertContainer.classList.remove('expanded');
-        }
-    });
-
-  // Fetch and display pending credit requests
-fetch('/credit-requests')
-.then(response => response.json())
-.then(data => {
-    if (data.success) {
-        data.requests.forEach(request => {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'credit-alert';
-            alertDiv.innerHTML = `<span>${request.link_name}</span> von <strong>${request.customer_name}</strong> hat mehr Guthaben angefragt.`;
-            alertContainer.appendChild(alertDiv);
-        });
+  document.addEventListener("click", (e) => {
+    if (
+      !alertContainer.contains(e.target) &&
+      alertContainer.classList.contains("expanded")
+    ) {
+      alertContainer.classList.remove("expanded");
     }
-})
-.catch(err => console.error("Fehler beim Laden der Guthabenanfragen:", err));
+  });
 
+  // Lädt alle offenen Guthabenanfragen vom Server
+  fetch("/credit-requests")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        data.requests.forEach((request) => {
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "credit-alert";
+          alertDiv.innerHTML = `<span>${request.link_name}</span> von <strong>${request.customer_name}</strong> hat mehr Guthaben angefragt.`;
+          alertContainer.appendChild(alertDiv);
+        });
+      }
+    })
+    .catch((err) =>
+      console.error("Fehler beim Laden der Guthabenanfragen:", err)
+    );
 
-  // Initial load of cards for all customers
+  // Lädt Karten für alle bestehenden Kunden
   const customers = document.querySelectorAll(".customer");
   customers.forEach((customer) => {
     const customerId = customer.dataset.id;
@@ -43,7 +44,7 @@ fetch('/credit-requests')
     }
   });
 
-  // Event listener for submitting a new link
+  // Event-Listener für das Erstellen eines neuen Links
   document.getElementById("submit-link").addEventListener("click", function () {
     const projectName = document.getElementById("project-name").value;
     const customerId =
@@ -54,11 +55,12 @@ fetch('/credit-requests')
       return;
     }
 
+    // Erstellt ein Ablaufdatum 30 Tage in der Zukunft
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 30);
     const formattedExpirationDate = expirationDate.toISOString().split("T")[0];
 
-    // Create the card in the database
+    // Sendet eine POST-Anfrage an den Server, um eine neue Karte zu erstellen
     fetch(`/cards`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -90,10 +92,9 @@ fetch('/credit-requests')
   });
 });
 
-// Function to toggle the customer card
+// Schaltet die Sichtbarkeit der Kundenkarten um
 function toggleCard(button) {
   const card = button.closest(".customer").querySelector(".customer-links");
-
   if (card) {
     card.style.display =
       card.style.display === "none" || card.style.display === ""
@@ -102,65 +103,61 @@ function toggleCard(button) {
   }
 }
 
-// Function to open the new link form
+// Öffnet das Formular zum Erstellen eines neuen Links
 function openNewLinkForm(customerId) {
   const form = document.getElementById("new-link-form");
   form.style.display = "block";
-  form.dataset.customerId = customerId; // Associate the form with the customer
+  form.dataset.customerId = customerId;
 }
 
-// Function to close the new link form
+// Schließt das Formular zum Erstellen eines neuen Links
 function closeNewLinkForm() {
   const form = document.getElementById("new-link-form");
   form.style.display = "none";
   form.dataset.customerId = "";
 }
 
-// Load cards for a specific customer
+// Lädt die Karten für einen bestimmten Kunden
 function loadCustomerCards(customerId) {
-  console.log(`Loading cards for customer ${customerId}`); // Debugging
+  console.log(`Lade Karten für Kunde ${customerId}`);
 
   fetch(`/customers/${customerId}/cards?timestamp=${Date.now()}`)
     .then((response) => {
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
       }
       return response.json();
     })
     .then((data) => {
-      console.log("Received cards:", data); // Debugging
+      console.log("Erhaltene Karten:", data);
 
       const customerElement = document.querySelector(
         `.customer[data-id='${customerId}']`
       );
+
       if (!customerElement) {
-        console.warn(
-          `Kein Kunden-Element für ID ${customerId} gefunden. Überspringe.`
-        );
-        return; // Fehler abfangen, aber Script nicht crashen lassen
+        console.warn(`Kein Kunden-Element für ID ${customerId} gefunden.`);
+        return;
       }
 
       const customerLinks = customerElement.querySelector(".customer-links");
       if (!customerLinks) {
-        console.warn(
-          `Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`
-        );
+        console.warn(`Kein ".customer-links"-Element für Kunde ${customerId} gefunden.`);
         return;
       }
 
-      customerLinks.innerHTML = ""; // Vorherige Karten entfernen
+      customerLinks.innerHTML = "";
       data.cards.forEach((card) => addCardToCustomer(card, customerId));
     })
     .catch((err) => console.error("Fehler beim Laden der Karten:", err));
 }
 
-// Funktion zum Aktualisieren der Karten-Einstellungen
+// Aktualisiert die Einstellungen einer Karte
 function updateCardSettings(input) {
   const cardId = input.dataset.cardId;
   let fieldName = input.name;
   let value = input.value;
 
-  // Mappe die HTML-Namen auf die Datenbank-Felder
   const fieldMapping = {
     fformat: "file_format",
     fsize: "max_file_size",
@@ -168,22 +165,17 @@ function updateCardSettings(input) {
     edate: "expiration_date",
   };
 
-  // Falls das Feld im Mapping ist, ersetze es
   if (fieldMapping[fieldName]) {
     fieldName = fieldMapping[fieldName];
   }
 
-  // Konvertiere spezielle Werte
   if (fieldName === "compression_level" && !value.includes("%")) {
     value += "%";
-  } else if (
-    fieldName === "max_file_size" &&
-    !value.toLowerCase().includes("mb")
-  ) {
+  } else if (fieldName === "max_file_size" && !value.toLowerCase().includes("mb")) {
     value += " MB";
   }
 
-  console.log(`Updating ${fieldName} for card ${cardId} with value: ${value}`); // Debugging
+  console.log(`Updating ${fieldName} for card ${cardId} with value: ${value}`);
 
   fetch(`/cards/${cardId}`, {
     method: "PATCH",
@@ -197,12 +189,10 @@ function updateCardSettings(input) {
         alert("Fehler beim Speichern der Änderungen.");
       }
     })
-    .catch((error) =>
-      console.error("Fehler beim Aktualisieren der Karte:", error)
-    );
+    .catch((error) => console.error("Fehler beim Aktualisieren der Karte:", error));
 }
 
-//Card löschen
+// Löscht eine Karte nach Bestätigung
 function deleteCard(cardId) {
   if (!confirm("Möchtest du diese Karte wirklich löschen?")) return;
 
@@ -212,7 +202,6 @@ function deleteCard(cardId) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        // Entferne die Karte aus dem DOM
         document.querySelector(`.card[data-id='${cardId}']`).remove();
       } else {
         alert("Fehler beim Löschen der Karte: " + data.message);
@@ -222,187 +211,155 @@ function deleteCard(cardId) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial load of cards for all customers
-    const customers = document.querySelectorAll(".customer");
-    customers.forEach((customer) => {
-      const customerId = customer.dataset.id;
-      if (customerId) {
-        loadCustomerCards(customerId);
-      }
-    });
-  
-    // Unified Event Listener for All Changes
-    document.addEventListener("change", (event) => {
-      const target = event.target;
-  
-      // Handle expiration date field
-      if (target.matches(".edate")) {
-        const expirationDate = new Date(target.value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Compare only the date
-  
-        if (expirationDate < today) {
-          target.classList.add("expired");
-        } else {
-          target.classList.remove("expired");
-        }
-      }
-  
-      // Handle card settings updates (format, size, compression, expiration)
-      if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
-        updateCardSettings(target);
-      }
-  
-      // Handle credits update
-      if (target.matches(".credits")) {
-        const cardId = target.dataset.cardId;
-        const credits = parseInt(target.value);
-
-        if (!cardId) {
-            console.error("Keine cardId gefunden. Abbruch des Updates.");
-            alert("Fehler: Keine Karten-ID gefunden.");
-            return;
-          }
-        
-          if (isNaN(credits) || credits < 0) {
-            alert("Bitte geben Sie eine gültige Anzahl von Credits ein.");
-            return;
-          }
-
-          console.log("Sending PATCH request to /cards/" + cardId, { credits });
-  
-          fetch(`/cards/${cardId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ credits })
-          })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                console.log("Credits erfolgreich aktualisiert.");
-              } else {
-                console.error("Fehler beim Aktualisieren der Credits:", data.message);
-                alert("Fehler beim Aktualisieren der Credits.");
-              }
-            })
-            .catch(err => console.error("Fehler:", err));
-        }
-    });
+  // Lädt Karten für alle vorhandenen Kunden beim Start
+  const customers = document.querySelectorAll(".customer");
+  customers.forEach((customer) => {
+    const customerId = customer.dataset.id;
+    if (customerId) {
+      loadCustomerCards(customerId);
+    }
   });
-  
 
-// Add a new card to the UI dynamically
+  // Globaler Event-Listener für Änderungen an allen Eingabefeldern
+  document.addEventListener("change", (event) => {
+    const target = event.target;
+
+    if (target.matches(".edate")) {
+      const expirationDate = new Date(target.value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (expirationDate < today) {
+        target.classList.add("expired");
+      } else {
+        target.classList.remove("expired");
+      }
+    }
+
+    if (target.matches(".fformat, .fsize, .dcompression, .edate")) {
+      updateCardSettings(target);
+    }
+
+    if (target.matches(".credits")) {
+      const cardId = target.dataset.cardId;
+      const credits = parseInt(target.value);
+
+      if (!cardId) {
+        console.error("Keine cardId gefunden. Abbruch des Updates.");
+        alert("Fehler: Keine Karten-ID gefunden.");
+        return;
+      }
+
+      if (isNaN(credits) || credits < 0) {
+        alert("Bitte geben Sie eine gültige Anzahl von Credits ein.");
+        return;
+      }
+
+      console.log("Sende PATCH-Request an /cards/" + cardId, { credits });
+
+      // Sendet PATCH-Request zur Aktualisierung der Credits
+      fetch(`/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            console.log("Credits erfolgreich aktualisiert.");
+          } else {
+            console.error("Fehler beim Aktualisieren der Credits:", data.message);
+            alert("Fehler beim Aktualisieren der Credits.");
+          }
+        })
+        .catch((err) => console.error("Fehler:", err));
+    }
+  });
+});
+
+// Fügt eine neue Karte dynamisch zur Benutzeroberfläche hinzu
 function addCardToCustomer(card, customerId) {
   const customer = document.querySelector(`.customer[data-id='${customerId}']`);
   const customerLinks = customer.querySelector(".customer-links");
 
-  // Ablaufdatum als Date-Objekt erstellen
   const expirationDate = new Date(card.expiration_date);
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Stelle sicher, dass nur das Datum verglichen wird
-
+  today.setHours(0, 0, 0, 0); // Vergleich nur auf Datumsebene
   const isExpired = expirationDate < today;
 
   const truncateText = (text, maxLength = 25) => {
-    return text.length > maxLength
-      ? `${text.substring(0, maxLength)}...`
-      : text;
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
+  // Erstellt das HTML-Template für die Karte
   const cardHTML = `
-        <div class="card" data-id="${card.id}">
-            <div class="project">
-                <h3>${card.name}</h3>
-                <div class="project-link">
-                    <a href="${
-                      card.url || "#"
-                    }" target="_blank" rel="noopener noreferrer">${truncateText(
-    card.url || "Keine URL angegeben"
-  )}</a>
-                    <span class="icon delete-card" data-card-id="${
-                      card.id
-                    }">delete</span> 
-                </div>
-            </div>
-            <div class="settings">
-                <form class="setting-1">
-                    <label for="fformat">Dateiformat</label>
-                    <select class="fformat" name="fformat" data-card-id="${
-                      card.id
-                    }">
-                        <option value=".jpg" ${
-                          card.file_format === ".jpg" ? "selected" : ""
-                        }>.jpg</option>
-                        <option value=".png" ${
-                          card.file_format === ".png" ? "selected" : ""
-                        }>.png</option>
-                    </select>
-                    <label for="fsize">Dateigröße (max.)</label>
-                    <input type="text" placeholder="50 MB" value="${
-                      card.max_file_size || ""
-                    }" class="fsize" name="fsize" data-card-id="${card.id}">
-                 </form>
-                 <form class="setting-2">
-                    <label for="dcompression">Komprimierungsgrad</label>
-                    <input type="text" placeholder="80%" value="${
-                      card.compression_level || ""
-                    }" class="dcompression" name="dcompression" data-card-id="${
-    card.id
-  }">
-                 </form>
-                 <form class="setting-3">
-                    <label for="edate">Ablaufdatum des Links</label>
-                    <input type="date" value="${
-                      card.expiration_date || ""
-                    }" class="edate ${
-    isExpired ? "expired" : ""
-  }" name="edate" data-card-id="${card.id}">
-                    <label for="credits">Guthaben Anzeige</label>
-                    <input type="text" placeholder="0 Credits" class="credits" name="credits" data-card-id="${card.id}" value="${card.credits || 0}">
-                </form>
-            </div>
+    <div class="card" data-id="${card.id}">
+      <div class="project">
+        <h3>${card.name}</h3>
+        <div class="project-link">
+          <a href="${card.url || "#"}" target="_blank" rel="noopener noreferrer">
+            ${truncateText(card.url || "Keine URL angegeben")}
+          </a>
+          <span class="icon delete-card" data-card-id="${card.id}">delete</span> 
         </div>
-    `;
+      </div>
+      <div class="settings">
+        <form class="setting-1">
+          <label for="fformat">Dateiformat</label>
+          <select class="fformat" name="fformat" data-card-id="${card.id}">
+            <option value=".jpg" ${card.file_format === ".jpg" ? "selected" : ""}>.jpg</option>
+            <option value=".png" ${card.file_format === ".png" ? "selected" : ""}>.png</option>
+          </select>
+          <label for="fsize">Dateigröße (max.)</label>
+          <input type="text" placeholder="50 MB" value="${card.max_file_size || ""}" class="fsize" name="fsize" data-card-id="${card.id}">
+        </form>
+        <form class="setting-2">
+          <label for="dcompression">Komprimierungsgrad</label>
+          <input type="text" placeholder="80%" value="${card.compression_level || ""}" class="dcompression" name="dcompression" data-card-id="${card.id}">
+        </form>
+        <form class="setting-3">
+          <label for="edate">Ablaufdatum des Links</label>
+          <input type="date" value="${card.expiration_date || ""}" class="edate ${isExpired ? "expired" : ""}" name="edate" data-card-id="${card.id}">
+          <label for="credits">Guthaben Anzeige</label>
+          <input type="text" placeholder="0 Credits" class="credits" name="credits" data-card-id="${card.id}" value="${card.credits || 0}">
+        </form>
+      </div>
+    </div>
+  `;
 
+  // Fügt die generierte Karte in das DOM ein
   customerLinks.insertAdjacentHTML("beforeend", cardHTML);
 
-  // Ablaufdatum-Feld nachträglich mit Klasse "expired" versehen
-  const inputField = customerLinks.querySelector(
-    `.edate[data-card-id="${card.id}"]`
-  );
+  // Markiert das Ablaufdatum-Feld als abgelaufen, falls zutreffend
+  const inputField = customerLinks.querySelector(`.edate[data-card-id="${card.id}"]`);
   if (isExpired) {
     inputField.classList.add("expired");
   } else {
     inputField.classList.remove("expired");
   }
 
-  // Event-Listener zum Löschen der Karte hinzufügen
-  const deleteButton = customerLinks.querySelector(
-    `.delete-card[data-card-id='${card.id}']`
-  );
+  // Fügt Event-Listener für den Lösch-Button hinzu
+  const deleteButton = customerLinks.querySelector(`.delete-card[data-card-id='${card.id}']`);
   deleteButton.addEventListener("click", () => deleteCard(card.id));
 }
 
-// Function to open the new link form with background blur and input reset
+// Öffnet das Formular für einen neuen Link, setzt das Eingabefeld zurück und fügt einen Hintergrund-Blur hinzu
 function openNewLinkForm(customerId) {
   const form = document.getElementById("new-link-form");
   const body = document.body;
 
-  // Reset input field
   form.querySelector("#project-name").value = "";
 
-  // Show the form and apply blur
   form.style.display = "block";
   body.classList.add("blur-active");
   form.dataset.customerId = customerId;
 
-  // Add event listener to detect clicks outside the form
   setTimeout(() => {
     document.addEventListener("click", handleOutsideClick);
   }, 0);
 }
 
-// Function to close the new link form
+// Schließt das Formular für den neuen Link und entfernt den Hintergrund-Blur
 function closeNewLinkForm() {
   const form = document.getElementById("new-link-form");
   const body = document.body;
@@ -411,21 +368,19 @@ function closeNewLinkForm() {
   form.dataset.customerId = "";
   body.classList.remove("blur-active");
 
-  // Remove outside click listener
   document.removeEventListener("click", handleOutsideClick);
 }
 
-// Function to detect clicks outside the form and close it
+// Erkennt Klicks außerhalb des Formulars und schließt es gegebenenfalls
 function handleOutsideClick(event) {
   const form = document.getElementById("new-link-form");
 
-  // If the click is outside the form, close it
   if (!form.contains(event.target)) {
     closeNewLinkForm();
   }
 }
 
-// Prevent closing when clicking inside the form
+// Verhindert das Schließen des Formulars, wenn innerhalb des Formulars geklickt wird
 document.getElementById("new-link-form").addEventListener("click", (event) => {
   event.stopPropagation();
 });

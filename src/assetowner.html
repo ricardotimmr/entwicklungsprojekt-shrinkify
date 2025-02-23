@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
+    <!-- Meta-Informationen und externe Ressourcen -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://apis.google.com https://accounts.google.com https://www.dropbox.com;">
     <title>shrinkify.</title>
+
+    <!-- Dropbox API -->
     <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="6eewjssmb5z6yux"></script>
 
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="styles/combined.css">
     <link rel="stylesheet" href="styles/assetowner.css">
   </head>
 
   <body>
+    <!-- Header-Bereich mit Navigation -->
     <header>
       <h1>shrinkify.</h1>
       <ul>
@@ -21,6 +26,7 @@
       </ul>
     </header>
 
+    <!-- Modal für URL-Upload -->
     <div id="urlUploadModal" class="modal hidden">
       <div class="modal-content">
         <span id="closeUrlModal" class="close">&times;</span>
@@ -32,134 +38,114 @@
     <div id="modalBackdrop" class="hidden"></div>
 
     <main>
+      <!-- Hauptbereich für Upload und Dateiansicht -->
       <section class="overview">
         <h2>Projektname</h2>
+
         <div class="instructions">
           <h3>So funktioniert's:</h3>
-          <p>
-            1. Dateien hochladen: Ziehen Sie Ihre Dateien hierher oder klicken
-            Sie auf "Browse File".
-          </p>
-          <p>
-            2. Optimierung: Wir komprimieren Ihre Dateien in Sekundenschnelle.
-          </p>
+          <p>1. Dateien hochladen: Ziehen Sie Ihre Dateien hierher oder klicken Sie auf "Browse File".</p>
+          <p>2. Optimierung: Wir komprimieren Ihre Dateien in Sekundenschnelle.</p>
           <p>3. Download: Laden Sie die optimierten Dateien sofort herunter.</p>
         </div>
-        <form>
-        <div id="drop-area">
-            <img src="/assets/upload-logo.png" alt="upload-icon">
-          <p>Drag & Drop zum Hochladen von Dateien</p>
-          <p>oder</p>
-          <button type="button" id="browseButton">Browse File</button>
-          <input
-            type="file"
-            id="fileInput"
-            name="file"
-            accept=".jpg, .jpeg, .png"
-            multiple>
-          <ul class="upload-options">
-            <li id="selectFromDropBox">
-              <img src="../assets/dropbox-logo.svg.png" alt="dropbox-logo">
-              <p>Dropbox</p>
-            </li>
-            <li id="selectFromGoogleDrive">
-              <img src="../assets/google-drive-logo.png" alt="google-logo">
-              <p>Google Drive</p>
-            </li>
-            <li id="selectFromURL">
-              <img src="../assets/link-logo.png" alt="url-icon">
-              <p>URL</p>
-            </li>
-          </ul>
-        </div>
-      </form>
-        <div class="file-view">
-        <div class="file-lists">
-          <h4>Heute</h4>
-          <ul class="file-list-today" id="file-list-today">
-            <!-- Hier werden die Dateien dynamisch hinzugefügt -->
-          </ul>        
-          <button class="download-all">aktuelle herunterladen</button>
-          <!-- E-Mail Button -->
-          <button id="openEmailModal" class="email-button">E-Mail senden</button>
 
-          <!-- E-Mail Modal -->
-          <div id="emailModal" class="modal hidden">
-            <div class="modal-content">
-              <span id="closeEmailModal" class="close">&times;</span>
-              <h3>Download-Link per E-Mail senden</h3>
-              <form id="emailForm">
-                <input type="email" id="emailInput" name="email" placeholder="E-Mail eingeben" required />
-                <button type="submit" class="send-email">Senden</button>
-              </form>
-            </div>
+        <!-- Upload-Bereich -->
+        <form>
+          <div id="drop-area">
+            <img src="/assets/upload-logo.png" alt="upload-icon">
+            <p>Drag & Drop zum Hochladen von Dateien</p>
+            <p>oder</p>
+            <button type="button" id="browseButton">Browse File</button>
+            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" multiple>
+            
+            <!-- Upload-Optionen -->
+            <ul class="upload-options">
+              <li id="selectFromDropBox">
+                <img src="../assets/dropbox-logo.svg.png" alt="dropbox-logo">
+                <p>Dropbox</p>
+              </li>
+              <li id="selectFromGoogleDrive">
+                <img src="../assets/google-drive-logo.png" alt="google-logo">
+                <p>Google Drive</p>
+              </li>
+              <li id="selectFromURL">
+                <img src="../assets/link-logo.png" alt="url-icon">
+                <p>URL</p>
+              </li>
+            </ul>
           </div>
-        <div id="modalBackdrop" class="hidden"></div>
-  
-          <h4>Frühere Uploads</h4>
-          <ul class="file-list" id="file-list-old">
-            <!-- Hier werden die Dateien dynamisch hinzugefügt -->
-            <!-- <li class="file-item">
-              <div class="file-info">
-                <img class="prev-pic" src="../assets/preview.jpg" alt="preview">
-                <p class="filename">meine-datei.jpg</p>
+        </form>
+
+        <!-- Dateiansicht -->
+        <div class="file-view">
+          <div class="file-lists">
+            <h4>Heute</h4>
+            <ul class="file-list-today" id="file-list-today"></ul>
+            <button class="download-all">aktuelle herunterladen</button>
+            <button id="openEmailModal" class="email-button">E-Mail senden</button>
+
+            <!-- E-Mail Modal -->
+            <div id="emailModal" class="modal hidden">
+              <div class="modal-content">
+                <span id="closeEmailModal" class="close">&times;</span>
+                <h3>Download-Link per E-Mail senden</h3>
+                <form id="emailForm">
+                  <input type="email" id="emailInput" name="email" placeholder="E-Mail eingeben" required />
+                  <button type="submit" class="send-email">Senden</button>
+                </form>
               </div>
-              <p class="timestamp">19:24</p>
-              <div class="file-actions">
-                <span class="icon">delete</span>
-                <span class="icon">download</span>
-              </div>
-            </li> -->
-          </ul>
+            </div>
+            <div id="modalBackdrop" class="hidden"></div>
+
+            <h4>Frühere Uploads</h4>
+            <ul class="file-list" id="file-list-old"></ul>
+          </div>
+          <button class="start-upload" id="start-upload">Upload starten</button>
         </div>
-        <button class="start-upload" id="start-upload">Upload starten</button>
-      </div>
       </section>
 
+      <!-- Einstellungen und Kontaktbereich -->
       <section class="settings-container">
         <div class="info">
           <div class="settings">
             <h2>Einstellungen</h2>
-            <ul>
-              <!-- <li>
-                <p class="settings-category">Dateiformate</p>
-                <p>.jpg</p>
-              </li>
-              <li>
-                <p class="settings-category">Dateigröße (max.)</p>
-                <p>50 MB</p>
-              </li>
-              <li>
-                <p class="settings-category">Komprimierungsgrad</p>
-                <p>80% Qualität</p>
-              </li>
-              <li>
-                <p class="settings-category">Ablaufdatum des Links</p>
-                <p>31.12.24</p>
-              </li>
-              <li>
-                <p class="settings-category">Guthaben Anzeige</p>
-                <p>6 Credits</p>
-              </li> -->
-            </ul> 
+            <ul></ul>
             <button id="request-credits-btn"><span class="icon">add_circle</span> Guthaben anfragen</button>
           </div>
+
           <div class="contact">
             <h2>Content Manager</h2>
             <p class="cm-name">Jonas Weber</p>
-            <p>Pixel and Code Technologies   
-            </br>Behrenstraße 24
-            </br>10117 Berlin</p>
-            <p>+49 30 273828
-            </br>jonas.weber@pixelcode.de</p>
+            <p>Pixel and Code Technologies<br>Behrenstraße 24<br>10117 Berlin</p>
+            <p>+49 30 273828<br>jonas.weber@pixelcode.de</p>
           </div>
         </div>
       </section>
     </main>
+
+      <!-- Footer mit allgemeinen Informationen -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="left">
+                <div class="brand">shrinkify.</div>
+                <p class="small-text">shrinkify. – Einfaches und effizientes Dateikomprimieren für Ihre digitalen Anforderungen.</p>
+            </div>
+            <ul class="right">
+                <li><a href="#">Über uns</a></li>
+                <li><a href="#">Support</a></li>
+                <li><a href="#">Impressum</a></li>
+            </ul>
+        </div>
+        <hr class="divider">
+        <div class="copyright">
+            <p>&#169; 2025 shrinkify. All rights reserved.</p>
+        </div>
+    </footer>
+
   </body>
 
+  <!-- Externe Skripte -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
-
   <script src="./scripts/assetowner.js" defer></script>
 </html>

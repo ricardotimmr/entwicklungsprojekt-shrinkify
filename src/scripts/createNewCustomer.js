@@ -1,33 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Initialisierung und Event-Listener setzen
     loadCustomers();
 
     const form = document.getElementById("new-customer-form");
     const body = document.body;
-    
-    // Show new customer form when clicking the button
+
     document.getElementById("new-customer-button").addEventListener("click", () => {
         form.style.display = "block";
         body.classList.add("blur-active");
     });
 
-    // Close form when clicking the close button
     document.querySelector(".close-btn").addEventListener("click", () => {
         form.style.display = "none";
         body.classList.remove("blur-active");
     });
 
-    // Handle form submission
     document.getElementById("submit-customer").addEventListener("click", () => {
         const name = document.getElementById("customer-name").value.trim();
         const email = document.getElementById("customer-email").value.trim();
-    
+
         if (!name || !email) {
             alert("Bitte füllen Sie alle Felder aus.");
             return;
         }
-    
-        console.log("Submitting:", { name, email }); // Debugging
-    
+
+        // Neuen Kunden an den Server senden
         fetch("http://localhost:3000/customers", {
             method: "POST",
             headers: {
@@ -37,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Response from server:", data); // Debugging
             if (data.error) {
                 alert("Fehler: " + data.error);
             } else {
@@ -45,45 +41,38 @@ document.addEventListener("DOMContentLoaded", () => {
                 resetCustomerForm();
             }
         })
-        .catch(error => console.error("Error:", error));
+        .catch(error => console.error("Fehler:", error));
     });
 
     const searchInput = document.getElementById("customer-search");
-
     if (searchInput) {
         searchInput.addEventListener("input", filterCustomers);
     }
 });
 
-// Function to filter customers
+// Filtert Kunden basierend auf der Suchanfrage
 function filterCustomers() {
     const searchValue = document.getElementById("customer-search").value.toLowerCase();
     const customers = document.querySelectorAll(".customer");
 
     customers.forEach(customer => {
         const customerName = customer.querySelector(".customer-button").textContent.toLowerCase();
-        
-        if (customerName.includes(searchValue)) {
-            customer.style.display = "grid"; // Show matching customers
-        } else {
-            customer.style.display = "none"; // Hide non-matching customers
-        }
+        customer.style.display = customerName.includes(searchValue) ? "grid" : "none";
     });
 }
 
-// Fetch and display customers from the database
+// Lädt Kunden vom Server und zeigt sie an
 function loadCustomers() {
     fetch(`http://localhost:3000/customers?timestamp=${Date.now()}`)
         .then(response => response.json())
         .then(customers => {
             const customerList = document.querySelector(".customer-list");
-            customerList.innerHTML = ""; // Clear existing list
+            customerList.innerHTML = "";
 
             customers.forEach(customer => {
                 addCustomerToList(customer);
             });
 
-            // Karten erst nach dem Rendern der Kunden laden
             customers.forEach(customer => {
                 loadCustomerCards(customer.id);
             });
@@ -91,8 +80,7 @@ function loadCustomers() {
         .catch(error => console.error("Fehler beim Laden der Kunden:", error));
 }
 
-
-// Add a new customer to the UI dynamically
+// Fügt einen neuen Kunden zur Benutzeroberfläche hinzu
 function addCustomerToList(customer) {
     const customerList = document.querySelector(".customer-list");
 
@@ -113,16 +101,13 @@ function addCustomerToList(customer) {
     `;
 
     customerList.appendChild(customerDiv);
-
-    // Ensure cards load for this customer
     loadCustomerCards(customer.id);
 }
 
+// Setzt die Eingabefelder des Formulars zurück und blendet es aus
 function resetCustomerForm() {
     document.getElementById("customer-name").value = "";
     document.getElementById("customer-email").value = "";
     document.getElementById("new-customer-form").style.display = "none";
-  
-    // Remove the blur effect from the body
     document.body.classList.remove("blur-active");
 }
