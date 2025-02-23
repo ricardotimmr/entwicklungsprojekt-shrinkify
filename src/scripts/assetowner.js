@@ -6,10 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileListOld = document.getElementById("file-list-old");
   const startUploadButton = document.getElementById("start-upload");
   const dropArea = document.getElementById("drop-area");
+
   const emailButton = document.getElementById("openEmailModal");
   const emailModal = document.getElementById("emailModal");
   const modalBackdrop = document.getElementById("modalBackdrop");
   const closeEmailModal = document.getElementById("closeEmailModal");
+
   const emailForm = document.getElementById("emailForm");
   const emailInput = document.getElementById("emailInput");
 
@@ -28,42 +30,51 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Token an den Server zur Validierung senden
   fetch(`/validate-token?token=${token}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (!data.valid) {
-        alert("Ungültiger oder abgelaufener Link.");
-        window.location.href = "/";
-      } else {
-        console.log("Token ist gültig. Daten:", data);
-        cardId = data.data.cardId;
-        console.log("Extrahierte Karten-ID:", cardId);
+  .then((response) => response.json())
+  .then((data) => {
+    if (!data.valid) {
+      alert("Ungültiger oder abgelaufener Link.");
+      window.location.href = "/";
+    } else {
+      console.log("Token ist gültig. Daten:", data);
+      
+      // Sicherstellen, dass cardId eine Zahl ist
+      cardId = parseInt(data.data.cardId, 10);
 
-        const projectName = data.data.projectName || "Projektname";
-        const projectTitleElement = document.querySelector(".overview h2");
-        if (projectTitleElement) {
-          projectTitleElement.textContent = projectName;
-        }
-
-        loadImages(cardId);
-
-        // Fetch card details and update settings container
-        fetch(`/customers/${data.data.customerId}/cards`)
-          .then((response) => response.json())
-          .then((cardsData) => {
-            const card = cardsData.cards.find((c) => c.id === cardId);
-            if (card) {
-              updateSettingsContainer(card); // <--- Call here
-            }
-          })
-          .catch((err) =>
-            console.error("Fehler beim Abrufen der Kartendaten:", err)
-          );
+      if (isNaN(cardId)) {
+        console.error("❌ Fehler: cardId ist keine gültige Zahl.", cardId);
+        return;
       }
-    })
-    .catch((err) => {
-      console.error("Fehler bei der Token-Validierung:", err);
-      alert("Fehler bei der Token-Überprüfung.");
-    });
+
+      console.log("✅ Extrahierte Karten-ID:", cardId);
+
+      const projectName = data.data.projectName || "Projektname";
+      const projectTitleElement = document.querySelector(".overview h2");
+      if (projectTitleElement) {
+        projectTitleElement.textContent = projectName;
+      }
+
+      loadImages(cardId);
+
+      // Fetch card details and update settings container
+      fetch(`/customers/${data.data.customerId}/cards`)
+        .then((response) => response.json())
+        .then((cardsData) => {
+          const card = cardsData.cards.find((c) => c.id === cardId);
+          if (card) {
+            updateSettingsContainer(card);
+          }
+        })
+        .catch((err) =>
+          console.error("Fehler beim Abrufen der Kartendaten:", err)
+        );
+    }
+  })
+  .catch((err) => {
+    console.error("Fehler bei der Token-Validierung:", err);
+    alert("Fehler bei der Token-Überprüfung.");
+  });
+
 
   // Lade Bilder aus der Datenbank und zeige sie in der Liste an
   function loadImages(cardId) {
@@ -168,12 +179,12 @@ document.addEventListener("DOMContentLoaded", function () {
     event.preventDefault();
     dropArea.classList.remove("dragover");
 
-  // Dateien aus Drag & Drop in fileInput setzen
-  fileInput.files = event.dataTransfer.files;
+    // Dateien aus Drag & Drop in fileInput setzen
+    fileInput.files = event.dataTransfer.files;
 
-  // Manuell das `change`-Event für fileInput auslösen
-  fileInput.dispatchEvent(new Event("change"));
-  }); 
+    // Manuell das `change`-Event für fileInput auslösen
+    fileInput.dispatchEvent(new Event("change"));
+  });
 
   // Starte Upload automatisch nach Auswahl der Dateien
   fileInput.addEventListener("change", async function () {
@@ -228,12 +239,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   startUploadButton.addEventListener("click", async () => {
-    if (!cardId) {
-      console.error("Keine cardId gefunden. Upload abgebrochen.");
+    if (!cardId || isNaN(cardId)) {
+      console.error("❌ Fehler: cardId ist ungültig. Upload abgebrochen.");
       return;
     }
 
-    // Fetch card settings before starting upload
+    console.log("🟢 cardId für API-Aufruf:", cardId);
+    cardId = Number(cardId);
+
     const response = await fetch(`/cards/${cardId}`);
     const cardData = await response.json();
 
@@ -303,65 +316,92 @@ document.addEventListener("DOMContentLoaded", function () {
         continue; // Skip file
       }
 
-      const progressContainer = Array.from(document.querySelectorAll(".file-item"))
-            .find(item => item.querySelector(".filename").textContent === (file.name || file.fileName));
-      
-          if (!progressContainer) {
-            console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
-            continue;
-          }
-          
-          const fileProgress = progressContainer.querySelector(".file-progress");
-          const progressBar = progressContainer.querySelector(".progress-bar");
+      const progressContainer = Array.from(
+        document.querySelectorAll(".file-item")
+      ).find((item) => {
+        const filenameElement = item.querySelector(".filename");
+        return (
+          filenameElement &&
+          filenameElement.textContent.trim() === (file.name || file.fileName)
+        );
+      });
 
-          if (fileProgress && progressBar) {
-            fileProgress.classList.remove("hidden");
-            progressBar.style.width = "0%"; // Reset progress
-          }
-      
-          try {
-            await uploadFile(file, progressBar, progressContainer);
-            updateFileStatus(file.name, "Erfolgreich hochgeladen");
-          } catch (error) {
-            updateFileStatus(file.name, "Fehler beim Upload", true);
-          }
-        
-      
-        filesToUpload = [];
-      
+      if (!progressContainer) {
+        console.error(
+          "❌ Kein passender progressContainer für Datei gefunden:",
+          file.name
+        );
+        return;
+      }
+
+      if (!progressContainer) {
+        console.error(`Kein progressContainer für Datei ${file.name} gefunden`);
+        continue;
+      }
+
+      const fileProgress = progressContainer.querySelector(".file-progress");
+      const progressBar = progressContainer.querySelector(".progress-bar");
+
+      if (fileProgress && progressBar) {
+        fileProgress.classList.remove("hidden");
+        progressBar.style.width = "0%"; // Reset progress
+      }
 
       try {
-        const uploadResponse = await uploadFile(
-          actualFile,
-          cardId,
-          progressBar,
-          progressContainer,
-          {
-            compressionPercent,
-            fileFormat,
-          }
-        );
+        // Wähle die richtige Datei aus (falls actualFile vorhanden ist, nutze sie)
+    let fileToUpload = actualFile || file;
 
-        updateFileStatus(actualFile.name, "Upload erfolgreich");
+    // Falls es sich um eine Dropbox-Datei handelt, lade sie zuerst herunter
+    if (file.isDropbox && file.fileUrl) {
+        console.log("📥 Lade Dropbox-Datei herunter:", file.fileUrl);
 
-        // Safely check for remainingCredits
-        if (uploadResponse && uploadResponse.remainingCredits !== undefined) {
-          document.querySelector(
-            ".settings-container .settings ul li:nth-child(5) p"
-          ).textContent = `${uploadResponse.remainingCredits} Credits`;
-          console.log(`Credits updated: ${uploadResponse.remainingCredits}`);
-        } else {
-          console.warn("Upload response missing 'remainingCredits'.");
+        try {
+            const dropboxResponse = await fetch(file.fileUrl);
+            const blob = await dropboxResponse.blob();
+            fileToUpload = new File([blob], file.fileName, { type: blob.type });
+
+            console.log(`✅ Dropbox-Datei erfolgreich geladen: ${fileToUpload.name}`);
+        } catch (dropboxError) {
+            console.error(`❌ Fehler beim Laden der Dropbox-Datei ${file.fileName}:`, dropboxError);
+            alert(`Fehler beim Laden der Dropbox-Datei ${file.fileName}`);
+            return;
         }
-
-        console.log(`Upload abgeschlossen für: ${actualFile.name}`);
-      } catch (error) {
-        updateFileStatus(actualFile.name, "Upload fehlgeschlagen", true);
-        console.error(
-          `Fehler beim Upload der Datei ${actualFile.name}:`,
-          error
+    }
+    
+        console.log("🚀 Starte Upload für:", fileToUpload.name, "mit cardId:", cardId);
+    
+        // Starte den Upload
+        const uploadResponse = await uploadFile(
+            fileToUpload,
+            cardId,
+            progressBar,
+            progressContainer,
+            {
+                compressionPercent,
+                fileFormat,
+            }
         );
-      }
+    
+        // Falls der Upload erfolgreich war, Status aktualisieren
+        updateFileStatus(fileToUpload.name, "Upload erfolgreich");
+    
+        // Falls vorhanden, Credits in der UI aktualisieren
+        if (uploadResponse && uploadResponse.remainingCredits !== undefined) {
+            document.querySelector(
+                ".settings-container .settings ul li:nth-child(5) p"
+            ).textContent = `${uploadResponse.remainingCredits} Credits`;
+            console.log(`✅ Credits aktualisiert: ${uploadResponse.remainingCredits}`);
+        }
+    
+        console.log(`✅ Upload abgeschlossen für: ${fileToUpload.name}`);
+    
+    } catch (error) {
+        updateFileStatus(file.name, "Fehler beim Upload", true);
+        console.error(`❌ Fehler beim Upload der Datei ${file.name}:`, error);
+    }
+    
+    // Liste der zu uploadenden Dateien leeren
+    filesToUpload = [];
     }
   });
 
@@ -527,7 +567,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const formData = new FormData();
       const actualFile = file.fileBlob || file;
       formData.append("file", actualFile, actualFile.name);
-      formData.append("cardId", cardId);
+      formData.append("cardId", String(cardId)); // Stelle sicher, dass es ein String ist
 
       // Start the upload
       xhr.send(formData);
@@ -832,30 +872,30 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Bitte eine gültige Bild-URL eingeben.");
       return;
     }
-  
+
     try {
       // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error("Bild konnte nicht geladen werden.");
-  
+
       const blob = await response.blob();
       const mimeType = blob.type || "image/jpeg"; // Fallback if type is undefined
       const fileName = imageUrl.split("/").pop().split("?")[0] || "image.jpg";
-  
+
       // Convert blob to File object with proper MIME type
       const file = new File([blob], fileName, { type: mimeType });
-  
+
       // Add to UI list
       addURLFileToList(file, imageUrl);
-  
+
       // Store in filesToUpload with correct structure
       filesToUpload.push({
-        fileBlob: file,      // The actual File object
+        fileBlob: file, // The actual File object
         fileName: file.name, // Name for reference
-        isURL: true,         // Flag indicating URL source
-        mimeType: mimeType   // Include MIME type
+        isURL: true, // Flag indicating URL source
+        mimeType: mimeType, // Include MIME type
       });
-  
+
       closeModal();
       console.log(`URL-Datei ${fileName} erfolgreich hinzugefügt.`);
     } catch (error) {
@@ -896,6 +936,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(`Datei entfernt: ${file.name}`);
     });
   }
+
 
   // Modal öffnen
   emailButton.addEventListener("click", () => {
