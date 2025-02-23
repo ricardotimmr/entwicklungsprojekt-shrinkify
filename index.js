@@ -26,6 +26,7 @@ app.use("/src/styles", express.static(path.join(__dirname, "/src/styles")));
 app.use("/src/scripts", express.static(path.join(__dirname, "/src/scripts")));
 app.use("/src/fonts", express.static(path.join(__dirname, "/src/fonts")));
 app.use("/src/html", express.static(path.join(__dirname, "/src/html")));
+app.use("/compressed", express.static(path.join(__dirname, "../compressed")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "/src/index.html"));
@@ -426,6 +427,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   console.log("Upload gestartet...");
 
   const { cardId } = req.body;
+  console.log("📌 Erhaltene Datei:", req.file ? req.file.originalname : "KEINE DATEI");
+  console.log("📌 cardId aus Anfrage:", cardId);
 
   if (!req.file) {
     console.error("Keine Datei hochgeladen.");
@@ -438,14 +441,18 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 
   // Fetch card settings
-  const sql = "SELECT * FROM customer_links WHERE id = ?";
-  db.get(sql, [cardId], async (err, card) => {
-    if (err || !card) {
-      console.error("Fehler beim Abrufen der Karteneinstellungen:", err);
-      return res
-        .status(500)
-        .json({ message: "Fehler beim Abrufen der Karteneinstellungen." });
+  console.log("📌 DEBUG: Abrufen der Karteneinstellungen für cardId:", cardId);
+const sql = "SELECT * FROM customer_links WHERE id = ?";
+db.get(sql, [cardId], async (err, card) => {
+    if (err) {
+        console.error("❌ SQL-Fehler beim Abrufen der Karteneinstellungen:", err.message);
+        return res.status(500).json({ message: "Fehler beim Abrufen der Karteneinstellungen.", error: err.message });
     }
+    if (!card) {
+        console.error("❌ Keine Karteneinstellungen gefunden für cardId:", cardId);
+        return res.status(404).json({ message: "Keine Karteneinstellungen gefunden." });
+    }
+    console.log("✅ Karteneinstellungen erfolgreich abgerufen:", card);
 
     const maxFileSizeBytes = parseInt(card.max_file_size) * 1024 * 1024;
     const compressionLevel = parseInt(card.compression_level) || 75;
@@ -613,22 +620,21 @@ app.get("/images", (req, res) => {
 // Fetch specific card by cardId
 app.get("/cards/:cardId", (req, res) => {
   const { cardId } = req.params;
-  console.log("🔍 cardId aus der Anfrage:", cardId);
+  console.log("🔍 Abrufen der Karten-Einstellungen für cardId:", cardId);
 
   const query = `SELECT * FROM customer_links WHERE id = ?`;
   db.get(query, [cardId], (err, row) => {
     if (err) {
-      console.error("Fehler beim Abrufen der Karte:", err.message);
-      return res
-        .status(500)
-        .json({ success: false, message: "Fehler beim Abrufen der Karte." });
-    }
-    if (!row) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Karte nicht gefunden." });
-    }
-    res.status(200).json({ success: true, card: row });
+      console.error("❌ Fehler beim Abrufen der Karte:", err.message);
+      return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
+  }
+  if (!row) {
+      console.error("🚨 Keine Karte mit dieser ID gefunden.");
+      return res.status(404).json({ success: false, message: "Karte nicht gefunden." });
+  }
+
+  console.log("✅ Karte gefunden:", row);
+  res.status(200).json({ success: true, card: row });
   });
 });
 
