@@ -505,7 +505,12 @@ document.addEventListener("DOMContentLoaded", function () {
             downloadIcon.addEventListener("click", () => {
               const a = document.createElement("a");
               a.href = response.compressed.path;
-              a.download = file.name.replace(/\.[^/.]+$/, ".jpeg");
+            
+              // Use fallback if file.name is undefined
+              const originalName = file?.name || file?.fileName || "download.jpeg";
+              const safeFileName = originalName.replace(/\.[^/.]+$/, ".jpeg");
+            
+              a.download = safeFileName;
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
