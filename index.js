@@ -8,6 +8,7 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const nodemailer = require('nodemailer');
 const fs = require("fs");
+const archiver = require('archiver'); // Bibliothek für ZIP-Dateien
 
 const axios = require("axios");
 const cors = require("cors");
@@ -506,23 +507,58 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+
+app.get('/download-all/:cardId', (req, res) => {
+    const { cardId } = req.params;
+    const zipFileName = `compressed_files_${cardId}.zip`;
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=${zipFileName}`);
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    archive.pipe(res);
+
+    db.all("SELECT file_path FROM images WHERE card_id = ?", [cardId], (err, rows) => {
+        if (err) {
+            console.error("Fehler beim Abrufen der Bilder:", err.message);
+            return res.status(500).json({ message: "Fehler beim Abrufen der Bilder." });
+        }
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "Keine Bilder gefunden." });
+        }
+
+        rows.forEach((row) => {
+            const filePath = path.join(__dirname, "..", row.file_path);
+            archive.file(filePath, { name: path.basename(filePath) });
+        });
+
+        archive.finalize();
+    });
+});
+
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
 console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "✔️ Vorhanden" : "❌ Fehlt");
 
 app.post('/send-email', async (req, res) => {
-    const { email } = req.body;
+    const { email, cardId } = req.body;
 
-    if (!email) {
-        return res.status(400).json({ message: 'Bitte geben Sie eine gültige E-Mail-Adresse an.' });
+    if (!email || !cardId) {
+        return res.status(400).json({ message: 'Bitte geben Sie eine gültige E-Mail-Adresse und eine Karten-ID an.' });
     }
+
+    const downloadLink = `http://localhost:3000/download-all/${cardId}`;
 
     try {
         const info = await transporter.sendMail({
             from: `"Shrinkify" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Download-Link für Ihre Dateien',
-            text: '',
-            html: '<p>Hallo,</p><p>hier ist Ihr angefragter <b>Download-Link</b>.</p><p>Viel Spaß wünscht Ihnen das Shrinkify Team!</p>',
+            html: `<p>Hallo,</p>
+                   <p>Hier ist Ihr angefragter <b>Download-Link</b>.</p>
+                   <p><a href="${downloadLink}" target="_blank">Hier klicken, um alle Dateien herunterzuladen</a></p>
+                   <p>Viel Spaß wünscht Ihnen das Shrinkify Team!</p>`,
         });
 
         res.status(200).json({ message: 'E-Mail erfolgreich gesendet.', info });
@@ -531,6 +567,7 @@ app.post('/send-email', async (req, res) => {
         res.status(500).json({ message: 'Fehler beim Senden der E-Mail.', error });
     }
 });
+
 
 // Server starten
 app.listen(port, () => {
