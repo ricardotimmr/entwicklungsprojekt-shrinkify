@@ -23,60 +23,54 @@ document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
+  // Überprüfen, ob ein Token vorhanden ist, andernfalls Zugriff verweigern
   if (!token) {
     alert("Ungültiger Zugriff. Kein Token gefunden.");
     return;
   }
 
-  // Token an den Server zur Validierung senden
+  // Token validieren, Karten-ID extrahieren und Bilder sowie Karteneinstellungen laden
   fetch(`/validate-token?token=${token}`)
-  .then((response) => response.json())
-  .then((data) => {
-    if (!data.valid) {
-      alert("Ungültiger oder abgelaufener Link.");
-      window.location.href = "/";
-    } else {
-      console.log("Token ist gültig. Daten:", data);
-      
-      // Sicherstellen, dass cardId eine Zahl ist
-      cardId = parseInt(data.data.cardId, 10);
+    .then((response) => response.json())
+    .then((data) => {
+      if (!data.valid) {
+        alert("Ungültiger oder abgelaufener Link.");
+        window.location.href = "/";
+      } else {
+        cardId = parseInt(data.data.cardId, 10); // Sicherstellen, dass cardId eine Zahl ist
 
-      if (isNaN(cardId)) {
-        console.error("❌ Fehler: cardId ist keine gültige Zahl.", cardId);
-        return;
+        if (isNaN(cardId)) {
+          console.error("Fehler: cardId ist keine gültige Zahl.", cardId);
+          return;
+        }
+
+        const projectName = data.data.projectName || "Projektname";
+        const projectTitleElement = document.querySelector(".overview h2");
+        if (projectTitleElement) {
+          projectTitleElement.textContent = projectName;
+        }
+
+        loadImages(cardId);
+
+        fetch(`/customers/${data.data.customerId}/cards`)
+          .then((response) => response.json())
+          .then((cardsData) => {
+            const card = cardsData.cards.find((c) => c.id === cardId);
+            if (card) {
+              updateSettingsContainer(card);
+            }
+          })
+          .catch((err) =>
+            console.error("Fehler beim Abrufen der Kartendaten:", err)
+          );
       }
+    })
+    .catch((err) => {
+      console.error("Fehler bei der Token-Validierung:", err);
+      alert("Fehler bei der Token-Überprüfung.");
+    });
 
-      console.log("✅ Extrahierte Karten-ID:", cardId);
-
-      const projectName = data.data.projectName || "Projektname";
-      const projectTitleElement = document.querySelector(".overview h2");
-      if (projectTitleElement) {
-        projectTitleElement.textContent = projectName;
-      }
-
-      loadImages(cardId);
-
-      // Fetch card details and update settings container
-      fetch(`/customers/${data.data.customerId}/cards`)
-        .then((response) => response.json())
-        .then((cardsData) => {
-          const card = cardsData.cards.find((c) => c.id === cardId);
-          if (card) {
-            updateSettingsContainer(card);
-          }
-        })
-        .catch((err) =>
-          console.error("Fehler beim Abrufen der Kartendaten:", err)
-        );
-    }
-  })
-  .catch((err) => {
-    console.error("Fehler bei der Token-Validierung:", err);
-    alert("Fehler bei der Token-Überprüfung.");
-  });
-
-
-  // Lade Bilder aus der Datenbank und zeige sie in der Liste an
+  // Lade Bilder aus der Datenbank und zeige sie in der Liste an (Frühere Uploads)
   function loadImages(cardId) {
     fetch(`http://localhost:3000/images/${cardId}`)
       .then((response) => response.json())
@@ -85,11 +79,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         images.forEach((image) => {
           const fileName = image.file_path.split("/").pop();
-          console.log("File name:", fileName);
 
           const timestamp = new Date(image.uploaded_at);
           const day = timestamp.getDate().toString().padStart(2, "0");
-          const month = (timestamp.getMonth() + 1).toString().padStart(2, "0"); // Fix month offset
+          const month = (timestamp.getMonth() + 1).toString().padStart(2, "0"); // Monate sind 0-basiert
           const year = timestamp.getFullYear();
           const formattedTime = `${day}.${month}.${year}`;
 
@@ -114,7 +107,6 @@ document.addEventListener("DOMContentLoaded", function () {
           `;
           fileListOld.appendChild(listItem);
 
-          // Delete button
           const deleteIcon = listItem.querySelector(".icon.delete");
           if (deleteIcon) {
             deleteIcon.addEventListener("click", async () => {
@@ -129,9 +121,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (response.ok) {
                   listItem.remove();
-                  console.log(
-                    "Datei aus der Liste und der Datenbank gelöscht."
-                  );
                 } else {
                   console.error("Fehler beim Löschen der Datei.");
                 }
@@ -141,11 +130,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
           }
 
-          // Download button
           const downloadIcon = listItem.querySelector(".icon.download");
           if (downloadIcon) {
             downloadIcon.addEventListener("click", () => {
-              console.log("Download angefordert für:", image.file_path);
               const a = document.createElement("a");
               a.href = image.file_path;
               a.download = fileName;
@@ -161,32 +148,29 @@ document.addEventListener("DOMContentLoaded", function () {
       );
   }
 
+  // Event-Listener für Dateiauswahl
   browseButton.addEventListener("click", function () {
     fileInput.click();
   });
 
-  //Event-Listener für Drag & Drop Funktionalität
+  //Event-Listener für Drag & Drop Funktionalitäten
   dropArea.addEventListener("dragover", (event) => {
     event.preventDefault();
-    dropArea.classList.add("dragover"); // Optische Hervorhebung
+    dropArea.classList.add("dragover");
   });
 
   dropArea.addEventListener("dragleave", () => {
-    dropArea.classList.remove("dragover"); // Hervorhebung entfernen
+    dropArea.classList.remove("dragover");
   });
 
   dropArea.addEventListener("drop", (event) => {
     event.preventDefault();
     dropArea.classList.remove("dragover");
-
-    // Dateien aus Drag & Drop in fileInput setzen
     fileInput.files = event.dataTransfer.files;
-
-    // Manuell das `change`-Event für fileInput auslösen
     fileInput.dispatchEvent(new Event("change"));
   });
 
-  // Starte Upload automatisch nach Auswahl der Dateien
+  // Event-Listener für das Ändern der Dateiauswahl
   fileInput.addEventListener("change", async function () {
     const files = fileInput.files;
     if (!files.length) {
@@ -223,30 +207,26 @@ document.addEventListener("DOMContentLoaded", function () {
           </div>
         </div>
       `;
-
       fileListToday.appendChild(progressContainer);
 
-      // Close icon functionality
       const closeIcon = progressContainer.querySelector(".icon.close");
       if (closeIcon) {
         closeIcon.addEventListener("click", () => {
           filesToUpload = filesToUpload.filter((f) => f !== file);
           progressContainer.remove();
-          console.log(`Die Datei ${file.name} wurde entfernt.`);
         });
       }
     }
   });
 
+  // Event-Listener für Button zum Starten des Uploads und der Komprimierung
   startUploadButton.addEventListener("click", async () => {
     if (!cardId || isNaN(cardId)) {
-      console.error("❌ Fehler: cardId ist ungültig. Upload abgebrochen.");
+      console.error("Fehler: cardId ist ungültig. Upload abgebrochen.");
       return;
     }
 
-    console.log("🟢 cardId für API-Aufruf:", cardId);
     cardId = Number(cardId);
-
     const response = await fetch(`/cards/${cardId}`);
     const cardData = await response.json();
 
@@ -263,7 +243,6 @@ document.addEventListener("DOMContentLoaded", function () {
       credits,
     } = cardData.card;
 
-    // Convert settings to usable formats
     const maxFileSizeBytes = parseInt(max_file_size) * 1024 * 1024;
     const compressionPercent = parseInt(compression_level);
     const fileFormat = file_format.replace(".", "");
@@ -284,16 +263,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     for (const file of filesToUpload) {
-      let actualFile = file; // To handle Dropbox files
+      let actualFile = file;
 
       if (file.isDropbox) {
-        // Handle Dropbox file
         try {
           const dropboxResponse = await fetch(file.fileUrl);
           const blob = await dropboxResponse.blob();
           actualFile = new File([blob], file.fileName, { type: blob.type });
-
-          console.log(`Dropbox-Datei geladen: ${file.fileName}`);
         } catch (error) {
           console.error(
             `Fehler beim Laden der Dropbox-Datei ${file.fileName}:`,
@@ -305,15 +281,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (file.isGoogleDrive) {
-        actualFile = file.fileBlob; // Use the File object created from Google Drive blob
-        console.log(`Google Drive file loaded: ${file.fileName}`);
+        actualFile = file.fileBlob;
       }
 
       if (actualFile.size > maxFileSizeBytes) {
         alert(
           `Die Datei ${actualFile.name} überschreitet die maximale Dateigröße von ${max_file_size}.`
         );
-        continue; // Skip file
+        continue;
       }
 
       const progressContainer = Array.from(
@@ -328,7 +303,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!progressContainer) {
         console.error(
-          "❌ Kein passender progressContainer für Datei gefunden:",
+          "Kein passender progressContainer für Datei gefunden:",
           file.name
         );
         return;
@@ -344,64 +319,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (fileProgress && progressBar) {
         fileProgress.classList.remove("hidden");
-        progressBar.style.width = "0%"; // Reset progress
+        progressBar.style.width = "0%";
       }
 
       try {
-        // Wähle die richtige Datei aus (falls actualFile vorhanden ist, nutze sie)
-    let fileToUpload = actualFile || file;
+        let fileToUpload = actualFile || file;
 
-    // Falls es sich um eine Dropbox-Datei handelt, lade sie zuerst herunter
-    if (file.isDropbox && file.fileUrl) {
-        console.log("📥 Lade Dropbox-Datei herunter:", file.fileUrl);
-
-        try {
+        if (file.isDropbox && file.fileUrl) {
+          try {
             const dropboxResponse = await fetch(file.fileUrl);
             const blob = await dropboxResponse.blob();
             fileToUpload = new File([blob], file.fileName, { type: blob.type });
-
-            console.log(`✅ Dropbox-Datei erfolgreich geladen: ${fileToUpload.name}`);
-        } catch (dropboxError) {
-            console.error(`❌ Fehler beim Laden der Dropbox-Datei ${file.fileName}:`, dropboxError);
+          } catch (dropboxError) {
+            console.error(
+              `Fehler beim Laden der Dropbox-Datei ${file.fileName}:`,
+              dropboxError
+            );
             alert(`Fehler beim Laden der Dropbox-Datei ${file.fileName}`);
             return;
+          }
         }
-    }
-    
-        console.log("🚀 Starte Upload für:", fileToUpload.name, "mit cardId:", cardId);
-    
-        // Starte den Upload
+
         const uploadResponse = await uploadFile(
-            fileToUpload,
-            cardId,
-            progressBar,
-            progressContainer,
-            {
-                compressionPercent,
-                fileFormat,
-            }
+          fileToUpload,
+          cardId,
+          progressBar,
+          progressContainer,
+          {
+            compressionPercent,
+            fileFormat,
+          }
         );
-    
-        // Falls der Upload erfolgreich war, Status aktualisieren
-        updateFileStatus(fileToUpload.name, "Upload erfolgreich");
-    
-        // Falls vorhanden, Credits in der UI aktualisieren
+
         if (uploadResponse && uploadResponse.remainingCredits !== undefined) {
-            document.querySelector(
-                ".settings-container .settings ul li:nth-child(5) p"
-            ).textContent = `${uploadResponse.remainingCredits} Credits`;
-            console.log(`✅ Credits aktualisiert: ${uploadResponse.remainingCredits}`);
+          document.querySelector(
+            ".settings-container .settings ul li:nth-child(5) p"
+          ).textContent = `${uploadResponse.remainingCredits} Credits`;
         }
-    
-        console.log(`✅ Upload abgeschlossen für: ${fileToUpload.name}`);
-    
-    } catch (error) {
+      } catch (error) {
         updateFileStatus(file.name, "Fehler beim Upload", true);
-        console.error(`❌ Fehler beim Upload der Datei ${file.name}:`, error);
-    }
-    
-    // Liste der zu uploadenden Dateien leeren
-    filesToUpload = [];
+        console.error(`Fehler beim Upload der Datei ${file.name}:`, error);
+      }
+
+      filesToUpload = [];
     }
   });
 
@@ -411,9 +371,6 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error("Element mit der Klasse .download-all nicht gefunden");
   } else {
     downloadAllButton.addEventListener("click", () => {
-      console.log("Download für aktuelle Bilder angefordert");
-
-      // Konvertiere FileList in ein Array
       const filesArray = Array.from(fileInput.files);
 
       if (!filesArray || filesArray.length === 0) {
@@ -432,7 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Datei hochladen mit Fortschrittsanzeige
+  // Datei hochladen mit Fortschrittsanzeige (Heute Liste dynamisch aktualisieren)
   function uploadFile(file, cardId, progressBar, progressContainer) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -478,11 +435,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       };
 
-      // Upload Completed
       xhr.onload = () => {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
-          console.log("Serverantwort erhalten:", response);
 
           if (!response.compressed || !response.compressed.path) {
             console.error(
@@ -491,25 +446,20 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
           }
 
-          console.log("Erhaltener Bildpfad:", response.compressed.path);
-
-          // Set Image Preview
           const previewImg = progressContainer.querySelector(".prev-pic");
           previewImg.src = response.compressed.path;
-          console.log("Vorschau-Bild gesetzt auf:", previewImg.src);
 
-          // Download Icon Functionality
           const downloadIcon =
             progressContainer.querySelector(".icon.download");
           if (downloadIcon) {
             downloadIcon.addEventListener("click", () => {
               const a = document.createElement("a");
               a.href = response.compressed.path;
-            
-              // Use fallback if file.name is undefined
-              const originalName = file?.name || file?.fileName || "download.jpeg";
+
+              const originalName =
+                file?.name || file?.fileName || "download.jpeg";
               const safeFileName = originalName.replace(/\.[^/.]+$/, ".jpeg");
-            
+
               a.download = safeFileName;
               document.body.appendChild(a);
               a.click();
@@ -517,18 +467,14 @@ document.addEventListener("DOMContentLoaded", function () {
             });
           }
 
-          // Delete Icon Functionality
           const deleteIcon = progressContainer.querySelector(".icon.delete");
           if (deleteIcon) {
             deleteIcon.addEventListener("click", async () => {
               try {
-                // Use the compressed.path and strip '/compressed/'
                 const filePath = response.compressed.path.replace(
                   "/compressed/",
                   ""
                 );
-
-                console.log("Attempting to delete:", filePath); // Debugging path
 
                 const deleteResponse = await fetch(
                   "http://localhost:3000/delete",
@@ -542,14 +488,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 const result = await deleteResponse.json();
 
                 if (deleteResponse.ok) {
-                  console.log("✅ Datei erfolgreich gelöscht:", file.name);
                   progressContainer.remove();
                 } else {
-                  console.error("❌ Fehler beim Löschen:", result.message);
+                  console.error("Fehler beim Löschen:", result.message);
                 }
               } catch (error) {
                 console.error(
-                  "❌ Fehler beim Serveraufruf während Löschvorgang:",
+                  "Fehler beim Serveraufruf während Löschvorgang:",
                   error
                 );
               }
@@ -568,20 +513,17 @@ document.addEventListener("DOMContentLoaded", function () {
         reject(new Error("Netzwerkfehler beim Hochladen der Datei"));
       };
 
-      // Prepare FormData with file and cardId
       const formData = new FormData();
       const actualFile = file.fileBlob || file;
       formData.append("file", actualFile, actualFile.name);
-      formData.append("cardId", String(cardId)); // Stelle sicher, dass es ein String ist
+      formData.append("cardId", String(cardId)); 
 
-      // Start the upload
       xhr.send(formData);
     });
   }
 
-  // Update-Status für die Datei (zeigen, ob sie erfolgreich hochgeladen wurde oder nicht)
+  // Status einer Datei in der Liste aktualisieren
   function updateFileStatus(fileName, status, isError = false) {
-    // Datei aus der "Heute"-Liste aktualisieren
     const items = document.querySelectorAll(".file-item");
     items.forEach((item) => {
       const fileNameElement = item.querySelector(".filename");
@@ -590,12 +532,13 @@ document.addEventListener("DOMContentLoaded", function () {
         timestamp.textContent = status;
         const progressBar = item.querySelector(".progress-bar");
         if (isError) {
-          progressBar.style.backgroundColor = "#f8d7da"; // rot für Fehler
+          progressBar.style.backgroundColor = "#f8d7da";
         }
       }
     });
   }
 
+  // Anzeige der Einstellung auf aktuelle Content Manager Vorgaben stellen
   function updateSettingsContainer(card) {
     const settingsContainer = document.querySelector(
       ".settings-container .settings ul"
@@ -625,12 +568,11 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
   }
 
+  // EventListener für Dropbox-Button 
   dropboxButton.addEventListener("click", () => {
-    console.log("Dropbox button clicked, opening chooser...");
 
     Dropbox.choose({
       success: function (files) {
-        console.log("Dropbox chooser success callback triggered.");
         if (!files.length) {
           console.error("Keine Datei ausgewählt.");
           return;
@@ -638,9 +580,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const fileUrl = files[0].link;
         const fileName = files[0].name;
-        console.log(`Dropbox file selected: ${fileName}, URL: ${fileUrl}`);
 
-        // Add Dropbox file to the UI list
         const listItem = document.createElement("li");
         listItem.className = "file-item";
         listItem.dataset.fileUrl = fileUrl;
@@ -664,17 +604,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fileListToday.appendChild(listItem);
 
-        // Store Dropbox file info
         filesToUpload.push({ fileUrl, fileName, isDropbox: true });
-        console.log(`File ${fileName} added to upload queue.`);
 
-        // Enable remove option
         const closeIcon = listItem.querySelector(".icon.close");
         if (closeIcon) {
           closeIcon.addEventListener("click", () => {
             filesToUpload = filesToUpload.filter((f) => f.fileUrl !== fileUrl);
             listItem.remove();
-            console.log(`Datei entfernt: ${fileName}`);
           });
         }
       },
@@ -697,13 +633,12 @@ document.addEventListener("DOMContentLoaded", function () {
   let oauthToken;
   let tokenClient;
 
+  // Google Picker API initialisieren
   gapi.load("picker", () => {
-    console.log("Google Picker API loaded successfully.");
     pickerApiLoaded = true;
   });
 
   window.onload = () => {
-    console.log("Initializing Token Client...");
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
@@ -715,16 +650,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
+  // Event-Listener für Google Drive Button
   document
     .getElementById("selectFromGoogleDrive")
     .addEventListener("click", () => {
-      console.log("Google Drive selection clicked. Requesting access token...");
       tokenClient.requestAccessToken();
     });
 
   function createPicker() {
     if (pickerApiLoaded && oauthToken) {
-      console.log("Creating Google Picker with OAuth Token...");
 
       const picker = new google.picker.PickerBuilder()
         .addView(google.picker.ViewId.DOCS)
@@ -739,19 +673,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Callback-Funktion für die Google Picker API zur Handhabung der Dateiauswahl
   function pickerCallback(data) {
     console.log("Picker Callback triggered. Data received:", data);
     if (data.action === google.picker.Action.PICKED) {
       const fileId = data.docs[0].id;
       const fileName = data.docs[0].name;
-      console.log(`File selected. ID: ${fileId}, Name: ${fileName}`);
       fetchGoogleDriveFile(fileId, fileName);
     } else if (data.action === google.picker.Action.CANCEL) {
       console.log("Google Drive file selection canceled.");
     }
   }
 
-  // Fetch file from Google Drive and add to list (without uploading yet)
+  // Funktion zum Abrufen der Datei von Google Drive
   async function fetchGoogleDriveFile(fileId, fileName) {
     const accessToken = oauthToken;
 
@@ -774,21 +708,17 @@ document.addEventListener("DOMContentLoaded", function () {
           ? fileName
           : `${fileName}${fileExtension}`;
 
-        // Convert blob to File object
         const googleDriveFile = new File([blob], fullFileName, {
           type: mimeType,
         });
 
-        // Add file to UI list
         addGoogleDriveFileToList(googleDriveFile, fullFileName);
 
-        // Store in filesToUpload array for later upload
         filesToUpload.push({
           fileBlob: googleDriveFile,
           fileName: fullFileName,
           isGoogleDrive: true,
         });
-        console.log(`File ${fullFileName} added to upload queue.`);
       } else {
         console.error("Error fetching the file from Google Drive.");
       }
@@ -797,7 +727,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Function to determine file extension from MIME type
+  // Dateiendung aus MIME-Typ extrahieren
   function getFileExtensionFromMimeType(mimeType) {
     switch (mimeType) {
       case "image/png":
@@ -816,7 +746,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Add the Google Drive file to the UI list
+  // GoogleDrive Datei zur Liste Upload Liste hinzufügen
   function addGoogleDriveFileToList(blob, fileName) {
     const fileListToday = document.getElementById("file-list-today");
     const fileUrl = URL.createObjectURL(blob);
@@ -844,13 +774,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fileListToday.appendChild(listItem);
 
-    // Close button to remove the file before upload
     const closeIcon = listItem.querySelector(".icon.close");
     if (closeIcon) {
       closeIcon.addEventListener("click", () => {
         filesToUpload = filesToUpload.filter((f) => f.fileName !== fileName);
         listItem.remove();
-        console.log(`File removed: ${fileName}`);
       });
     }
   }
@@ -858,10 +786,10 @@ document.addEventListener("DOMContentLoaded", function () {
   selectFromURL.addEventListener("click", () => {
     urlUploadModal.classList.add("visible");
     modalBackdrop.classList.add("visible");
-    imageUrlInput.value = ""; // Reset input
+    imageUrlInput.value = ""; 
   });
 
-  // Close Modal on backdrop or close button
+  // URL Upload Modal
   modalBackdrop.addEventListener("click", closeModal);
   closeUrlModal.addEventListener("click", closeModal);
 
@@ -870,7 +798,7 @@ document.addEventListener("DOMContentLoaded", function () {
     modalBackdrop.classList.remove("visible");
   }
 
-  // Handle URL Submission
+  // URL Upload Button Event Listener
   submitImageUrl.addEventListener("click", async () => {
     const imageUrl = imageUrlInput.value.trim();
     if (!imageUrl) {
@@ -879,21 +807,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     try {
-      // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error("Bild konnte nicht geladen werden.");
 
       const blob = await response.blob();
-      const mimeType = blob.type || "image/jpeg"; // Fallback if type is undefined
+      const mimeType = blob.type || "image/jpeg"; 
       const fileName = imageUrl.split("/").pop().split("?")[0] || "image.jpg";
 
-      // Convert blob to File object with proper MIME type
       const file = new File([blob], fileName, { type: mimeType });
 
-      // Add to UI list
       addURLFileToList(file, imageUrl);
 
-      // Store in filesToUpload with correct structure
       filesToUpload.push({
         fileBlob: file, // The actual File object
         fileName: file.name, // Name for reference
@@ -909,7 +833,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Add URL Image to UI List
+  // URL-Datei zur Upload-Liste hinzufügen
   function addURLFileToList(file, imageUrl) {
     const listItem = document.createElement("li");
     listItem.className = "file-item";
@@ -933,15 +857,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fileListToday.appendChild(listItem);
 
-    // Close button to remove file
     const closeIcon = listItem.querySelector(".icon.close");
     closeIcon.addEventListener("click", () => {
       filesToUpload = filesToUpload.filter((f) => f.fileName !== file.name);
       listItem.remove();
-      console.log(`Datei entfernt: ${file.name}`);
     });
   }
-
 
   // Modal öffnen
   emailButton.addEventListener("click", () => {
@@ -955,21 +876,22 @@ document.addEventListener("DOMContentLoaded", function () {
     modalBackdrop.classList.remove("visible");
   });
 
+  // Modal schließen bei Klick auf Hintergrund
   modalBackdrop.addEventListener("click", () => {
     emailModal.classList.remove("visible");
     modalBackdrop.classList.remove("visible");
   });
 
-  // E-Mail senden
+  // E-Mail senden, wenn Mail Button geklickt wird
   emailForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    
+
     const email = emailInput.value;
 
     try {
-      const response = await fetch('http://localhost:3000/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:3000/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, cardId }),
       });
 
@@ -980,37 +902,40 @@ document.addEventListener("DOMContentLoaded", function () {
         emailModal.classList.remove("visible");
         modalBackdrop.classList.remove("visible");
       } else {
-        alert("Fehler: " + (result.message || "E-Mail konnte nicht gesendet werden."));
+        alert(
+          "Fehler: " + (result.message || "E-Mail konnte nicht gesendet werden.")
+        );
       }
     } catch (error) {
       console.error("Fehler beim Senden:", error);
       alert("Ein Fehler ist aufgetreten.");
     }
-
-});
-
-document.getElementById('request-credits-btn').addEventListener('click', () => {
-  if (!cardId) {
-      alert("Fehler: Keine Karten-ID gefunden.");
-      return;
-  }
-
-  fetch('/request-credits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId })
-  })
-  .then(response => response.json())
-  .then(data => {
-      if (data.success) {
-          alert("Anfrage für zusätzliches Guthaben gesendet.");
-      } else {
-          alert("Fehler beim Senden der Anfrage.");
-      }
-  })
-  .catch(err => {
-      console.error("Fehler beim Senden der Anfrage:", err);
-      alert("Ein Fehler ist aufgetreten.");
   });
-});
+
+  // Event-Listener für Anfrage von zusätzlichen Credits
+  document
+    .getElementById("request-credits-btn")
+    .addEventListener("click", () => {
+      if (!cardId) {
+        alert("Fehler: Keine Karten-ID gefunden.");
+        return;
+      }
+
+      fetch("/request-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cardId }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+          } else {
+            alert("Fehler beim Senden der Anfrage.");
+          }
+        })
+        .catch((err) => {
+          console.error("Fehler beim Senden der Anfrage:", err);
+          alert("Ein Fehler ist aufgetreten.");
+        });
+    });
 });
