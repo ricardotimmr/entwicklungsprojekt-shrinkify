@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileListOld = document.getElementById("file-list-old");
   const startUploadButton = document.getElementById("start-upload");
   const dropArea = document.getElementById("drop-area");
+
+  const emailButton = document.getElementById("openEmailModal");
+  const emailModal = document.getElementById("emailModal");
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const closeEmailModal = document.getElementById("closeEmailModal");
+
   const emailForm = document.getElementById("emailForm");
   const emailInput = document.getElementById("emailInput");
 
@@ -931,28 +937,75 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+
+  // Modal öffnen
+  emailButton.addEventListener("click", () => {
+    emailModal.classList.add("visible");
+    modalBackdrop.classList.add("visible");
+  });
+
+  // Modal schließen
+  closeEmailModal.addEventListener("click", () => {
+    emailModal.classList.remove("visible");
+    modalBackdrop.classList.remove("visible");
+  });
+
+  modalBackdrop.addEventListener("click", () => {
+    emailModal.classList.remove("visible");
+    modalBackdrop.classList.remove("visible");
+  });
+
+  // E-Mail senden
   emailForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-
+    
     const email = emailInput.value;
 
     try {
-      const response = await fetch("http://localhost:3000/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:3000/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, cardId }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        alert(result.message);
+        alert("E-Mail erfolgreich gesendet!");
+        emailModal.classList.remove("visible");
+        modalBackdrop.classList.remove("visible");
       } else {
-        alert(result.message || "Fehler beim Versenden der E-Mail.");
+        alert("Fehler: " + (result.message || "E-Mail konnte nicht gesendet werden."));
       }
     } catch (error) {
       console.error("Fehler beim Senden:", error);
       alert("Ein Fehler ist aufgetreten.");
     }
+
+});
+
+document.getElementById('request-credits-btn').addEventListener('click', () => {
+  if (!cardId) {
+      alert("Fehler: Keine Karten-ID gefunden.");
+      return;
+  }
+
+  fetch('/request-credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardId })
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          alert("Anfrage für zusätzliches Guthaben gesendet.");
+      } else {
+          alert("Fehler beim Senden der Anfrage.");
+      }
+  })
+  .catch(err => {
+      console.error("Fehler beim Senden der Anfrage:", err);
+      alert("Ein Fehler ist aufgetreten.");
   });
+});
 });
