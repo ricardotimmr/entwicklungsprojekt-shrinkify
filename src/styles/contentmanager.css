@@ -392,3 +392,74 @@ body.blur-active::before {
     z-index: 999;
   }
   
+  .credit-alerts {
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-fade-blue), var(--color-fade-purple));
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    transition: width 0.3s ease, height 0.3s ease;
+    overflow: hidden; /* Hide credit alerts in collapsed state */
+}
+
+.credit-alerts.expanded {
+    width: 400px; /* Increased width */
+    height: auto;
+    max-height: 600px; /* More space for alerts */
+    overflow-y: auto;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    flex-direction: column; /* Stack credit alerts vertically */
+    align-items: flex-start; /* Align items to the left */
+}
+
+.credit-alert {
+    border-bottom: 1px solid #ddd; /* Thinner line */
+    padding: 10px 0;
+    font-size: 14px; /* Smaller font size */
+    display: none; /* Hidden by default */
+    width: 100%; /* Full width in expanded view */
+    word-wrap: break-word;
+}
+
+.credit-alerts.expanded .credit-alert {
+    display: block; /* Show when expanded */
+}
+
+.credit-alert:last-child {
+    border-bottom: none;
+}
+
+.credit-alert span {
+    font-weight: bold;
+}
+
+.credit-alerts .alert-icon {
+    font-size: 24px;
+    color: #fff;
+    display: block;
+}
+
+.credit-alerts.expanded .alert-icon {
+    display: none;
+}
+
+/* Improved spacing for credit alerts */
+.credit-alerts.expanded .credit-alert {
+    margin-bottom: 6px;
+}
+
+.credit-alerts.expanded .credit-alert:last-child {
+    margin-bottom: 0;
+}
+

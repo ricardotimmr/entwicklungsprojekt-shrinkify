@@ -1,4 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+  const alertContainer = document.getElementById('credit-alerts');
+
+    // Add icon to the alert container
+    alertContainer.innerHTML = `<div class="alert-icon">⚠️</div>`;
+
+    // Toggle expand/collapse on click
+    alertContainer.addEventListener('click', (e) => {
+        alertContainer.classList.toggle('expanded');
+        e.stopPropagation(); // Prevent unwanted clicks outside
+    });
+
+    // Close the expanded alert when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!alertContainer.contains(e.target) && alertContainer.classList.contains('expanded')) {
+            alertContainer.classList.remove('expanded');
+        }
+    });
+
+  // Fetch and display pending credit requests
+fetch('/credit-requests')
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        data.requests.forEach(request => {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'credit-alert';
+            alertDiv.innerHTML = `<span>${request.link_name}</span> von <strong>${request.customer_name}</strong> hat mehr Guthaben angefragt.`;
+            alertContainer.appendChild(alertDiv);
+        });
+    }
+})
+.catch(err => console.error("Fehler beim Laden der Guthabenanfragen:", err));
+
+
   // Initial load of cards for all customers
   const customers = document.querySelectorAll(".customer");
   customers.forEach((customer) => {
