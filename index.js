@@ -1,6 +1,4 @@
-// Needed for overall functionality of the server
-require("dotenv").config(); // Fehler: Node.js-Projekt CommonJS (require) verwendet, aber du versuchst, ES Modules (import) zu nutzen
-console.log("ENV💚", process.env);
+require("dotenv").config(); // Node.js-Projekt CommonJS verwendet, aber es wird versucht, ES Modules (import) zu nutzen
 const express = require("express");
 const multer = require("multer");
 const sharp = require("sharp");
@@ -8,19 +6,19 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const nodemailer = require("nodemailer");
 const fs = require("fs");
-const archiver = require("archiver"); // Bibliothek für ZIP-Dateien
+const archiver = require("archiver");
 
 const axios = require("axios");
 const cors = require("cors");
 
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = "your-secret-key"; //brauchen noch function zum generieren
+const SECRET_KEY = "your-secret-key";
 
 const app = express();
 const port = 3000;
 
-app.use(express.json()); // JSON-Body Parser aktivieren
-app.use(express.urlencoded({ extended: true })); // Falls Form-Daten gesendet werden
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/src/styles", express.static(path.join(__dirname, "/src/styles")));
 app.use("/src/scripts", express.static(path.join(__dirname, "/src/scripts")));
@@ -32,7 +30,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "/src/index.html"));
 });
 
-// Verbindet mit der SQLite-Datenbank (die Datei wird automatisch erstellt, wenn sie nicht existiert)
+// Verbindung mit der SQLite-Datenbank
 const db = new sqlite3.Database("./database.db", (err) => {
   if (err) {
     console.error("Fehler beim Verbinden mit der Datenbank:", err.message);
@@ -41,6 +39,7 @@ const db = new sqlite3.Database("./database.db", (err) => {
   }
 });
 
+// Initialisierung der Tabellen
 db.serialize(() => {
   db.run(
     `CREATE TABLE IF NOT EXISTS customers (
@@ -89,7 +88,7 @@ db.serialize(() => {
         );
     `);
 
-    db.run(`CREATE TABLE IF NOT EXISTS credit_requests (
+  db.run(`CREATE TABLE IF NOT EXISTS credit_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       card_id INTEGER NOT NULL,
       requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -98,6 +97,7 @@ db.serialize(() => {
   )`);
 });
 
+//Gültigkeit des Tokens überprüfen
 app.get("/validate-token", (req, res) => {
   const { token } = req.query;
 
@@ -107,19 +107,19 @@ app.get("/validate-token", (req, res) => {
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    console.log("✅ Token erfolgreich decodiert:", decoded);
     res.status(200).json({ valid: true, data: decoded });
-} catch (err) {
-    console.error("❌ Fehler bei Token-Validierung:", err);
-    res.status(401).json({ valid: false, message: "Ungültiger oder abgelaufener Token." });
-}
+  } catch (err) {
+    res
+      .status(401)
+      .json({ valid: false, message: "Ungültiger oder abgelaufener Token." });
+  }
 });
 
 // Ordner für Uploads und komprimierte Bilder sicherstellen
 const uploadDir = path.resolve(__dirname, "../uploads");
 const compressedDir = path.resolve(__dirname, "../compressed");
 
-// Beispiel zum Speichern eines Bildpfads in der SQLite-Datenbank
+// Speicherung eines Bildes in Datenbank
 const saveImage = (filePath, cardId) => {
   const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
   db.run(sql, [filePath, cardId], (err) => {
@@ -134,6 +134,7 @@ const saveImage = (filePath, cardId) => {
   });
 };
 
+// Löschung eines Bildes aus Datenbank
 const deleteImage = (filePath) => {
   const sql = "DELETE FROM images WHERE file_path = ?";
   db.run(sql, [filePath], (err) => {
@@ -148,22 +149,24 @@ const deleteImage = (filePath) => {
   });
 };
 
-// Beispiel zum Abrufen aller Bilder
+// Abrufen aller Bilder aus Datenbank
 const getImages = (callback) => {
   const sql = "SELECT * FROM images";
   db.all(sql, [], (err, rows) => {
     if (err) {
       console.error("Fehler beim Abrufen der Bilder:", err.message);
     } else {
-      callback(rows); // Hiermit werden alle Bilder als Array zurückgegeben
+      callback(rows);
     }
   });
 };
 
+// Sicherstellen, dass die Upload- und komprimierten Ordner vorhanden sind
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 if (!fs.existsSync(compressedDir))
   fs.mkdirSync(compressedDir, { recursive: true });
 
+// Multer-Konfiguration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -171,12 +174,13 @@ const storage = multer.diskStorage({
     const baseName = path.basename(file.originalname, fileExt);
     const timestamp = Date.now();
     cb(null, `${timestamp}-${baseName}${fileExt}`);
-  }
+  },
 });
 
+// Multer-Upload-Optionen
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // Max 50 MB
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     allowedTypes.includes(file.mimetype)
@@ -185,16 +189,13 @@ const upload = multer({
   },
 });
 
-// Customer Routes
-// Create a new customer
+// Erstellung eines neuen Kunden
 app.post("/customers", (req, res) => {
   const { name, email } = req.body;
 
   if (!name || !email) {
     return res.status(400).json({ error: "Name und Email sind erforderlich." });
   }
-
-  console.log("Received new customer:", { name, email });
 
   db.run(
     `INSERT INTO customers (name, email) VALUES (?, ?)`,
@@ -218,7 +219,7 @@ app.post("/customers", (req, res) => {
   );
 });
 
-// Fetch all customers
+// Abrufen aller Kunden
 app.get("/customers", (req, res) => {
   db.all(`SELECT * FROM customers`, [], (err, rows) => {
     if (err) {
@@ -228,8 +229,7 @@ app.get("/customers", (req, res) => {
   });
 });
 
-// Card Routes
-// Create a new card
+// Abrufen eines bestimmten Upload-Links
 app.post("/cards", (req, res) => {
   const {
     customerId,
@@ -265,17 +265,13 @@ app.post("/cards", (req, res) => {
     function (err) {
       if (err) {
         console.error("Fehler beim Hinzufügen der Karte:", err.message);
-        return res
-          .status(500)
-          .json({
-            success: false,
-            message: "Fehler beim Hinzufügen der Karte.",
-          });
+        return res.status(500).json({
+          success: false,
+          message: "Fehler beim Hinzufügen der Karte.",
+        });
       }
 
       const cardId = this.lastID;
-
-      // Generate token and personalized link
       const payload = { cardId, customerId, projectName: name };
       const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "7d" });
       const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
@@ -289,12 +285,10 @@ app.post("/cards", (req, res) => {
               "Fehler beim Speichern des Links:",
               updateErr.message
             );
-            return res
-              .status(500)
-              .json({
-                success: false,
-                message: "Fehler beim Speichern des Links.",
-              });
+            return res.status(500).json({
+              success: false,
+              message: "Fehler beim Speichern des Links.",
+            });
           }
 
           res.status(201).json({
@@ -317,7 +311,7 @@ app.post("/cards", (req, res) => {
   );
 });
 
-// Fetch all cards for a specific customer
+// Abruf aller Upload-Links eines bestimmten Kunden
 app.get("/customers/:customerId/cards", (req, res) => {
   const { customerId } = req.params;
 
@@ -333,7 +327,7 @@ app.get("/customers/:customerId/cards", (req, res) => {
   });
 });
 
-// Update card details
+// Aktuallisierung der Einstellungen eines Upload-Links
 app.patch("/cards/:cardId", (req, res) => {
   const { cardId } = req.params;
   const {
@@ -369,15 +363,13 @@ app.patch("/cards/:cardId", (req, res) => {
   }
 
   if (updateFields.length === 0) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Keine gültigen Felder zum Aktualisieren.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Keine gültigen Felder zum Aktualisieren.",
+    });
   }
 
-  values.push(cardId); // Card ID als letztes Argument für das WHERE-Statement
+  values.push(cardId); // Card ID am Ende des Arrays hinzufügen
 
   const query = `UPDATE customer_links SET ${updateFields.join(
     ", "
@@ -386,12 +378,10 @@ app.patch("/cards/:cardId", (req, res) => {
   db.run(query, values, function (err) {
     if (err) {
       console.error("Fehler beim Aktualisieren der Karte:", err.message);
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: "Fehler beim Aktualisieren der Karte.",
-        });
+      return res.status(500).json({
+        success: false,
+        message: "Fehler beim Aktualisieren der Karte.",
+      });
     }
 
     db.get(
@@ -399,12 +389,10 @@ app.patch("/cards/:cardId", (req, res) => {
       [cardId],
       (err, row) => {
         if (err) {
-          return res
-            .status(500)
-            .json({
-              success: false,
-              message: "Fehler beim Abrufen der Karte.",
-            });
+          return res.status(500).json({
+            success: false,
+            message: "Fehler beim Abrufen der Karte.",
+          });
         }
         res.status(200).json({ success: true, card: row });
       }
@@ -412,7 +400,7 @@ app.patch("/cards/:cardId", (req, res) => {
   });
 });
 
-// Delete a card
+// Löschung eines bestimmten Upload-Links
 app.delete("/cards/:cardId", (req, res) => {
   const { cardId } = req.params;
 
@@ -431,12 +419,9 @@ app.delete("/cards/:cardId", (req, res) => {
 
 app.use(express.static(path.join(__dirname, "src")));
 
+//Verarbeitung des Uploads
 app.post("/upload", upload.single("file"), async (req, res) => {
-  console.log("Upload gestartet...");
-
   const { cardId } = req.body;
-  console.log("📌 Erhaltene Datei:", req.file ? req.file.originalname : "KEINE DATEI");
-  console.log("📌 cardId aus Anfrage:", cardId);
 
   if (!req.file) {
     console.error("Keine Datei hochgeladen.");
@@ -448,19 +433,30 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     return res.status(400).json({ message: "Fehlende cardId." });
   }
 
-  // Fetch card settings
-  console.log("📌 DEBUG: Abrufen der Karteneinstellungen für cardId:", cardId);
-const sql = "SELECT * FROM customer_links WHERE id = ?";
-db.get(sql, [cardId], async (err, card) => {
+  // Überprüfung der Karteneinstellungen
+  const sql = "SELECT * FROM customer_links WHERE id = ?";
+  db.get(sql, [cardId], async (err, card) => {
     if (err) {
-        console.error("❌ SQL-Fehler beim Abrufen der Karteneinstellungen:", err.message);
-        return res.status(500).json({ message: "Fehler beim Abrufen der Karteneinstellungen.", error: err.message });
+      console.error(
+        "SQL-Fehler beim Abrufen der Karteneinstellungen:",
+        err.message
+      );
+      return res
+        .status(500)
+        .json({
+          message: "Fehler beim Abrufen der Karteneinstellungen.",
+          error: err.message,
+        });
     }
     if (!card) {
-        console.error("❌ Keine Karteneinstellungen gefunden für cardId:", cardId);
-        return res.status(404).json({ message: "Keine Karteneinstellungen gefunden." });
+      console.error(
+        "Keine Karteneinstellungen gefunden für cardId:",
+        cardId
+      );
+      return res
+        .status(404)
+        .json({ message: "Keine Karteneinstellungen gefunden." });
     }
-    console.log("✅ Karteneinstellungen erfolgreich abgerufen:", card);
 
     const maxFileSizeBytes = parseInt(card.max_file_size) * 1024 * 1024;
     const compressionLevel = parseInt(card.compression_level) || 75;
@@ -486,31 +482,17 @@ db.get(sql, [cardId], async (err, card) => {
     }.${outputFormat}`;
     const outputFilePath = path.resolve(compressedDir, outputFileName);
 
-    console.log("Hochgeladene Datei:", inputFile);
-    console.log("Speicherort der komprimierten Datei:", outputFilePath);
-
     try {
-      // Get metadata for resizing
       const metadata = await sharp(inputFile).metadata();
-      console.log("Bild-Metadaten:", metadata);
-
-      // Example logic: Resize the image to 80% of original dimensions
       const newWidth = Math.round(metadata.width * 0.8);
       const newHeight = Math.round(metadata.height * 0.8);
-      console.log(`Neue Größe: ${newWidth}x${newHeight}`);
 
-      // Resize, apply compression, and convert format
       await sharp(inputFile)
         .resize(newWidth, newHeight)
         .toFormat(outputFormat, { quality: compressionLevel })
         .toFile(outputFilePath);
 
-      console.log("✅ Bild gespeichert:", outputFilePath);
-      console.log(
-        "🔍 Existiert die Datei?",
-        fs.existsSync(outputFilePath) ? "Ja" : "Nein"
-      );
-      // Deduct 1 credit
+      // Abzug von Credits
       db.run(
         `UPDATE customer_links SET credits = credits - 1 WHERE id = ?`,
         [cardId],
@@ -520,20 +502,18 @@ db.get(sql, [cardId], async (err, card) => {
               "Fehler beim Aktualisieren der Credits:",
               err.message
             );
-          } else {
-            console.log("1 Credit abgezogen.");
           }
         }
       );
 
-      // Save image path with cardId in the DB
+      // Speicherung des Bildes in der Datenbank
       db.run(
         "INSERT INTO images (file_path, card_id) VALUES (?, ?)",
         [`/compressed/${outputFileName}`, cardId],
         (err) => {
           if (err) {
             console.error(
-              "❌ Fehler beim Speichern des Bildes in der DB:",
+              "Fehler beim Speichern des Bildes in der DB:",
               err.message
             );
             return res
@@ -541,17 +521,15 @@ db.get(sql, [cardId], async (err, card) => {
               .json({ message: "Fehler beim Speichern des Bildes." });
           }
 
-          // Verify file exists after saving
           if (fs.existsSync(outputFilePath)) {
-            console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
+            console.log("Datei erfolgreich gespeichert:", outputFilePath);
           } else {
             console.error(
-              "❌ Datei wurde nicht gefunden nach Speicherung:",
+              "Datei wurde nicht gefunden nach Speicherung:",
               outputFilePath
             );
           }
 
-          // Respond with success and file details
           res.status(200).json({
             message: "Datei erfolgreich hochgeladen und komprimiert.",
             compressed: {
@@ -569,11 +547,10 @@ db.get(sql, [cardId], async (err, card) => {
   });
 });
 
+// Löschen eines Bildes
 app.delete("/delete", express.json(), (req, res) => {
-  console.log("🚨 DELETE-Anfrage erhalten:", req.body);
-
   if (!req.body || !req.body.filename) {
-    console.error("❌ req.body ist undefined oder 'filename' fehlt!", req.body);
+    console.error("req.body ist undefined oder 'filename' fehlt!", req.body);
     return res
       .status(400)
       .json({ message: "Fehlender Dateiname in der Anfrage." });
@@ -582,29 +559,23 @@ app.delete("/delete", express.json(), (req, res) => {
   const { filename } = req.body;
   const filePath = path.join(__dirname, "../compressed", filename);
 
-  console.log("🗑️ Versuche Datei zu löschen:", filePath);
-
-  // Datei aus dem Dateisystem löschen
+  // Bild aus dem Dateisystem löschen
   fs.unlink(filePath, (err) => {
     if (err) {
-      console.error("❌ Fehler beim Löschen der Datei:", err);
-      return res
-        .status(500)
-        .json({
-          message: "Fehler beim Löschen der Datei.",
-          error: err.message,
-        });
+      console.error("Fehler beim Löschen der Datei:", err);
+      return res.status(500).json({
+        message: "Fehler beim Löschen der Datei.",
+        error: err.message,
+      });
     }
 
-    console.log("✅ Datei erfolgreich gelöscht:", filename);
-
-    // Jetzt den Pfad der Datei aus der Datenbank löschen
-    deleteImage(`/compressed/${filename}`); // Hier den Pfad der Datei übergeben, der in der DB gespeichert wurde
-
+    // Pfad des Bildes aus der Datenbank löschen
+    deleteImage(`/compressed/${filename}`);
     res.json({ message: "Datei erfolgreich gelöscht." });
   });
 });
 
+// Abrufen aller Bilder zu einem Upload-Link
 app.get("/images/:cardId", (req, res) => {
   const { cardId } = req.params;
 
@@ -619,30 +590,31 @@ app.get("/images/:cardId", (req, res) => {
   });
 });
 
+// Abrufen aller Bilder
 app.get("/images", (req, res) => {
   getImages((images) => {
     res.json(images);
   });
 });
 
-// Fetch specific card by cardId
+// Eigenschaften eines Upload-Links abrufen
 app.get("/cards/:cardId", (req, res) => {
   const { cardId } = req.params;
-  console.log("🔍 Abrufen der Karten-Einstellungen für cardId:", cardId);
-
   const query = `SELECT * FROM customer_links WHERE id = ?`;
   db.get(query, [cardId], (err, row) => {
     if (err) {
-      console.error("❌ Fehler beim Abrufen der Karte:", err.message);
-      return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
-  }
-  if (!row) {
-      console.error("🚨 Keine Karte mit dieser ID gefunden.");
-      return res.status(404).json({ success: false, message: "Karte nicht gefunden." });
-  }
-
-  console.log("✅ Karte gefunden:", row);
-  res.status(200).json({ success: true, card: row });
+      console.error("Fehler beim Abrufen der Karte:", err.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Fehler beim Abrufen der Karte." });
+    }
+    if (!row) {
+      console.error("Keine Karte mit dieser ID gefunden.");
+      return res
+        .status(404)
+        .json({ success: false, message: "Karte nicht gefunden." });
+    }
+    res.status(200).json({ success: true, card: row });
   });
 });
 
@@ -656,6 +628,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Download aller Bilder als ZIP-Datei
 app.get("/download-all/:cardId", (req, res) => {
   const { cardId } = req.params;
   const zipFileName = `compressed_files_${cardId}.zip`;
@@ -695,19 +668,18 @@ app.get("/download-all/:cardId", (req, res) => {
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
 console.log(
   "EMAIL_PASS:",
-  process.env.EMAIL_PASS ? "✔️ Vorhanden" : "❌ Fehlt"
+  process.env.EMAIL_PASS ? "Vorhanden" : "Fehlt"
 );
 
+// E-Mail versenden
 app.post("/send-email", async (req, res) => {
   const { email, cardId } = req.body;
 
   if (!email || !cardId) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "Bitte geben Sie eine gültige E-Mail-Adresse und eine Karten-ID an.",
-      });
+    return res.status(400).json({
+      message:
+        "Bitte geben Sie eine gültige E-Mail-Adresse und eine Karten-ID an.",
+    });
   }
 
   const downloadLink = `http://localhost:3000/download-all/${cardId}`;
@@ -730,38 +702,52 @@ app.post("/send-email", async (req, res) => {
   }
 });
 
-
-app.post('/request-credits', (req, res) => {
+// Anfrage zusätzlicher Credits
+app.post("/request-credits", (req, res) => {
   const { cardId } = req.body;
 
   if (!cardId) {
-      return res.status(400).json({ success: false, message: 'cardId is required' });
+    return res
+      .status(400)
+      .json({ success: false, message: "cardId is required" });
   }
 
-  db.run(`INSERT INTO credit_requests (card_id) VALUES (?)`, [cardId], function(err) {
+  db.run(
+    `INSERT INTO credit_requests (card_id) VALUES (?)`,
+    [cardId],
+    function (err) {
       if (err) {
-          console.error("Error requesting credits:", err.message);
-          return res.status(500).json({ success: false, message: 'Error processing request' });
+        console.error("Error requesting credits:", err.message);
+        return res
+          .status(500)
+          .json({ success: false, message: "Error processing request" });
       }
 
-      res.status(200).json({ success: true, message: 'Credit request sent' });
-  });
+      res.status(200).json({ success: true, message: "Credit request sent" });
+    }
+  );
 });
 
-// API to fetch pending credit requests
-app.get('/credit-requests', (req, res) => {
-  db.all(`SELECT cr.id, cl.name AS link_name, cu.name AS customer_name 
+// Abrufen aller Anfragen für zusätzliche Credits
+app.get("/credit-requests", (req, res) => {
+  db.all(
+    `SELECT cr.id, cl.name AS link_name, cu.name AS customer_name 
           FROM credit_requests cr
           JOIN customer_links cl ON cr.card_id = cl.id
           JOIN customers cu ON cl.customer_id = cu.id
-          WHERE cr.status = 'pending'`, [], (err, rows) => {
+          WHERE cr.status = 'pending'`,
+    [],
+    (err, rows) => {
       if (err) {
-          console.error("Error fetching credit requests:", err.message);
-          return res.status(500).json({ success: false, message: 'Error fetching requests' });
+        console.error("Error fetching credit requests:", err.message);
+        return res
+          .status(500)
+          .json({ success: false, message: "Error fetching requests" });
       }
 
       res.status(200).json({ success: true, requests: rows });
-  });
+    }
+  );
 });
 
 // Server starten
