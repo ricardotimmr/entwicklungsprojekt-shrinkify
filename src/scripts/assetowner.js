@@ -230,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Fetch card settings before starting upload
+    console.log("🟢 cardId für API-Aufruf:", cardId);
     const response = await fetch(`/cards/${cardId}`);
     const cardData = await response.json();
 

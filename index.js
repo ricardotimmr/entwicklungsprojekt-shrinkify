@@ -1,14 +1,14 @@
 // Needed for overall functionality of the server
-require('dotenv').config(); // Fehler: Node.js-Projekt CommonJS (require) verwendet, aber du versuchst, ES Modules (import) zu nutzen
-console.log("ENV💚", process.env)
+require("dotenv").config(); // Fehler: Node.js-Projekt CommonJS (require) verwendet, aber du versuchst, ES Modules (import) zu nutzen
+console.log("ENV💚", process.env);
 const express = require("express");
 const multer = require("multer");
 const sharp = require("sharp");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 const fs = require("fs");
-const archiver = require('archiver'); // Bibliothek für ZIP-Dateien
+const archiver = require("archiver"); // Bibliothek für ZIP-Dateien
 
 const axios = require("axios");
 const cors = require("cors");
@@ -41,19 +41,23 @@ const db = new sqlite3.Database("./database.db", (err) => {
 });
 
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS customers (
+  db.run(
+    `CREATE TABLE IF NOT EXISTS customers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE
-    )`, (err) => {
-        if (err) {
-            console.error('Error creating customers table:', err.message);
-        } else {
-            console.log('Customers table initialized.');
-        }
-    });
+    )`,
+    (err) => {
+      if (err) {
+        console.error("Error creating customers table:", err.message);
+      } else {
+        console.log("Customers table initialized.");
+      }
+    }
+  );
 
-    db.run(`CREATE TABLE IF NOT EXISTS customer_links (
+  db.run(
+    `CREATE TABLE IF NOT EXISTS customer_links (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         customer_id INTEGER NOT NULL,
         name TEXT NOT NULL,
@@ -64,15 +68,17 @@ db.serialize(() => {
         credits INTEGER DEFAULT 0,  -- Add this line
         url TEXT,
         FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
-    )`, (err) => {
-        if (err) {
-            console.error('Error creating customer_links table:', err.message);
-        } else {
-            console.log('Customer links table initialized.');
-        }
-    });
-    
-    db.run(`
+    )`,
+    (err) => {
+      if (err) {
+        console.error("Error creating customer_links table:", err.message);
+      } else {
+        console.log("Customer links table initialized.");
+      }
+    }
+  );
+
+  db.run(`
         CREATE TABLE IF NOT EXISTS images (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_path TEXT NOT NULL,
@@ -84,18 +90,20 @@ db.serialize(() => {
 });
 
 app.get("/validate-token", (req, res) => {
-    const { token } = req.query;
+  const { token } = req.query;
 
-    if (!token) {
-        return res.status(400).json({ valid: false, message: "Token fehlt." });
-    }
+  if (!token) {
+    return res.status(400).json({ valid: false, message: "Token fehlt." });
+  }
 
-    try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        res.status(200).json({ valid: true, data: decoded });
-    } catch (err) {
-        res.status(401).json({ valid: false, message: "Ungültiger oder abgelaufener Token." });
-    }
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    console.log("✅ Token erfolgreich decodiert:", decoded);
+    res.status(200).json({ valid: true, data: decoded });
+} catch (err) {
+    console.error("❌ Fehler bei Token-Validierung:", err);
+    res.status(401).json({ valid: false, message: "Ungültiger oder abgelaufener Token." });
+}
 });
 
 // Ordner für Uploads und komprimierte Bilder sicherstellen
@@ -104,21 +112,27 @@ const compressedDir = path.resolve(__dirname, "../compressed");
 
 // Beispiel zum Speichern eines Bildpfads in der SQLite-Datenbank
 const saveImage = (filePath, cardId) => {
-    const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
-    db.run(sql, [filePath, cardId], (err) => {
-      if (err) {
-        console.error("Fehler beim Speichern des Bildes:", err.message);
-      } else {
-        console.log("Bild erfolgreich in der Datenbank gespeichert für cardId:", cardId);
-      }
-    });
-  };
+  const sql = "INSERT INTO images (file_path, card_id) VALUES (?, ?)";
+  db.run(sql, [filePath, cardId], (err) => {
+    if (err) {
+      console.error("Fehler beim Speichern des Bildes:", err.message);
+    } else {
+      console.log(
+        "Bild erfolgreich in der Datenbank gespeichert für cardId:",
+        cardId
+      );
+    }
+  });
+};
 
 const deleteImage = (filePath) => {
   const sql = "DELETE FROM images WHERE file_path = ?";
   db.run(sql, [filePath], (err) => {
     if (err) {
-      console.error("Fehler beim Löschen des Bildes aus der Datenbank:", err.message);
+      console.error(
+        "Fehler beim Löschen des Bildes aus der Datenbank:",
+        err.message
+      );
     } else {
       console.log("Bild erfolgreich aus der Datenbank gelöscht:", filePath);
     }
@@ -143,7 +157,12 @@ if (!fs.existsSync(compressedDir))
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (req, file, cb) => {
+    const fileExt = path.extname(file.originalname);
+    const baseName = path.basename(file.originalname, fileExt);
+    const timestamp = Date.now();
+    cb(null, `${timestamp}-${baseName}${fileExt}`);
+  }
 });
 
 const upload = multer({
@@ -159,260 +178,364 @@ const upload = multer({
 
 // Customer Routes
 // Create a new customer
-app.post('/customers', (req, res) => {
+app.post("/customers", (req, res) => {
   const { name, email } = req.body;
 
   if (!name || !email) {
-      return res.status(400).json({ error: "Name und Email sind erforderlich." });
+    return res.status(400).json({ error: "Name und Email sind erforderlich." });
   }
 
   console.log("Received new customer:", { name, email });
 
-  db.run(`INSERT INTO customers (name, email) VALUES (?, ?)`, [name, email], function (err) {
+  db.run(
+    `INSERT INTO customers (name, email) VALUES (?, ?)`,
+    [name, email],
+    function (err) {
       if (err) {
-          return res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: err.message });
       }
 
-      db.get(`SELECT * FROM customers WHERE id = ?`, [this.lastID], (err, row) => {
+      db.get(
+        `SELECT * FROM customers WHERE id = ?`,
+        [this.lastID],
+        (err, row) => {
           if (err) {
-              return res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
           }
           res.json(row);
-      });
-  });
+        }
+      );
+    }
+  );
 });
 
 // Fetch all customers
-app.get('/customers', (req, res) => {
+app.get("/customers", (req, res) => {
   db.all(`SELECT * FROM customers`, [], (err, rows) => {
-      if (err) {
-          return res.status(500).json({ error: err.message });
-      }
-      res.json(rows);
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
   });
 });
 
 // Card Routes
 // Create a new card
-app.post('/cards', (req, res) => {
-    const { customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate, credits = 0 } = req.body;
+app.post("/cards", (req, res) => {
+  const {
+    customerId,
+    name,
+    fileFormat,
+    maxFileSize,
+    compressionLevel,
+    expirationDate,
+    credits = 0,
+  } = req.body;
 
-    if (!customerId || !name || !expirationDate) {
-        return res.status(400).json({
-            success: false,
-            message: "Kunden-ID, Name und Ablaufdatum sind erforderlich."
-        });
-    }
+  if (!customerId || !name || !expirationDate) {
+    return res.status(400).json({
+      success: false,
+      message: "Kunden-ID, Name und Ablaufdatum sind erforderlich.",
+    });
+  }
 
-    const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, credits, url) 
+  const query = `INSERT INTO customer_links (customer_id, name, file_format, max_file_size, compression_level, expiration_date, credits, url) 
                    VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`;
 
-    db.run(query, [customerId, name, fileFormat, maxFileSize, compressionLevel, expirationDate, credits], function (err) {
-        if (err) {
-            console.error("Fehler beim Hinzufügen der Karte:", err.message);
-            return res.status(500).json({ success: false, message: "Fehler beim Hinzufügen der Karte." });
+  db.run(
+    query,
+    [
+      customerId,
+      name,
+      fileFormat,
+      maxFileSize,
+      compressionLevel,
+      expirationDate,
+      credits,
+    ],
+    function (err) {
+      if (err) {
+        console.error("Fehler beim Hinzufügen der Karte:", err.message);
+        return res
+          .status(500)
+          .json({
+            success: false,
+            message: "Fehler beim Hinzufügen der Karte.",
+          });
+      }
+
+      const cardId = this.lastID;
+
+      // Generate token and personalized link
+      const payload = { cardId, customerId, projectName: name };
+      const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "7d" });
+      const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
+
+      db.run(
+        `UPDATE customer_links SET url = ? WHERE id = ?`,
+        [personalizedLink, cardId],
+        (updateErr) => {
+          if (updateErr) {
+            console.error(
+              "Fehler beim Speichern des Links:",
+              updateErr.message
+            );
+            return res
+              .status(500)
+              .json({
+                success: false,
+                message: "Fehler beim Speichern des Links.",
+              });
+          }
+
+          res.status(201).json({
+            success: true,
+            card: {
+              id: cardId,
+              customer_id: customerId,
+              name,
+              file_format: fileFormat,
+              max_file_size: maxFileSize,
+              compression_level: compressionLevel,
+              expiration_date: expirationDate,
+              credits,
+              url: personalizedLink,
+            },
+          });
         }
-
-        const cardId = this.lastID;
-
-        // Generate token and personalized link
-        const payload = { cardId, customerId, projectName: name };
-        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '7d' });
-        const personalizedLink = `http://localhost:3000/assetowner.html?token=${token}`;
-
-        db.run(`UPDATE customer_links SET url = ? WHERE id = ?`, [personalizedLink, cardId], (updateErr) => {
-            if (updateErr) {
-                console.error("Fehler beim Speichern des Links:", updateErr.message);
-                return res.status(500).json({ success: false, message: "Fehler beim Speichern des Links." });
-            }
-
-            res.status(201).json({
-                success: true,
-                card: {
-                    id: cardId,
-                    customer_id: customerId,
-                    name,
-                    file_format: fileFormat,
-                    max_file_size: maxFileSize,
-                    compression_level: compressionLevel,
-                    expiration_date: expirationDate,
-                    credits,
-                    url: personalizedLink
-                }
-            });
-        });
-    });
+      );
+    }
+  );
 });
 
 // Fetch all cards for a specific customer
-app.get('/customers/:customerId/cards', (req, res) => {
-    const { customerId } = req.params;
+app.get("/customers/:customerId/cards", (req, res) => {
+  const { customerId } = req.params;
 
-    const query = `SELECT * FROM customer_links WHERE customer_id = ?`;
-    db.all(query, [customerId], (err, rows) => {
-        if (err) {
-            console.error("Fehler beim Abrufen der Karten:", err.message);
-            return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karten." });
-        }
-        res.status(200).json({ success: true, cards: rows });
-    });
+  const query = `SELECT * FROM customer_links WHERE customer_id = ?`;
+  db.all(query, [customerId], (err, rows) => {
+    if (err) {
+      console.error("Fehler beim Abrufen der Karten:", err.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Fehler beim Abrufen der Karten." });
+    }
+    res.status(200).json({ success: true, cards: rows });
+  });
 });
 
 // Update card details
-app.patch('/cards/:cardId', (req, res) => {
-    const { cardId } = req.params;
-    const { file_format, max_file_size, compression_level, expiration_date, credits } = req.body;
+app.patch("/cards/:cardId", (req, res) => {
+  const { cardId } = req.params;
+  const {
+    file_format,
+    max_file_size,
+    compression_level,
+    expiration_date,
+    credits,
+  } = req.body;
 
-    let updateFields = [];
-    let values = [];
+  let updateFields = [];
+  let values = [];
 
-    if (file_format !== undefined) {
-        updateFields.push("file_format = ?");
-        values.push(file_format);
-    }
-    if (max_file_size !== undefined) {
-        updateFields.push("max_file_size = ?");
-        values.push(max_file_size);
-    }
-    if (compression_level !== undefined) {
-        updateFields.push("compression_level = ?");
-        values.push(compression_level);
-    }
-    if (expiration_date !== undefined) {
-        updateFields.push("expiration_date = ?");
-        values.push(expiration_date);
-    }
-    if (credits !== undefined) {
-        updateFields.push("credits = ?");
-        values.push(credits);
-    } 
-    
-    if (updateFields.length === 0) {
-        return res.status(400).json({ success: false, message: "Keine gültigen Felder zum Aktualisieren." });
-    }   
+  if (file_format !== undefined) {
+    updateFields.push("file_format = ?");
+    values.push(file_format);
+  }
+  if (max_file_size !== undefined) {
+    updateFields.push("max_file_size = ?");
+    values.push(max_file_size);
+  }
+  if (compression_level !== undefined) {
+    updateFields.push("compression_level = ?");
+    values.push(compression_level);
+  }
+  if (expiration_date !== undefined) {
+    updateFields.push("expiration_date = ?");
+    values.push(expiration_date);
+  }
+  if (credits !== undefined) {
+    updateFields.push("credits = ?");
+    values.push(credits);
+  }
 
-    values.push(cardId); // Card ID als letztes Argument für das WHERE-Statement
+  if (updateFields.length === 0) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Keine gültigen Felder zum Aktualisieren.",
+      });
+  }
 
-    const query = `UPDATE customer_links SET ${updateFields.join(", ")} WHERE id = ?`;
+  values.push(cardId); // Card ID als letztes Argument für das WHERE-Statement
 
-    db.run(query, values, function (err) {
-        if (err) {
-            console.error("Fehler beim Aktualisieren der Karte:", err.message);
-            return res.status(500).json({ success: false, message: "Fehler beim Aktualisieren der Karte." });
-        }
+  const query = `UPDATE customer_links SET ${updateFields.join(
+    ", "
+  )} WHERE id = ?`;
 
-        db.get(`SELECT * FROM customer_links WHERE id = ?`, [cardId], (err, row) => {
-            if (err) {
-                return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
-            }
-            res.status(200).json({ success: true, card: row });
+  db.run(query, values, function (err) {
+    if (err) {
+      console.error("Fehler beim Aktualisieren der Karte:", err.message);
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message: "Fehler beim Aktualisieren der Karte.",
         });
-    });
+    }
+
+    db.get(
+      `SELECT * FROM customer_links WHERE id = ?`,
+      [cardId],
+      (err, row) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({
+              success: false,
+              message: "Fehler beim Abrufen der Karte.",
+            });
+        }
+        res.status(200).json({ success: true, card: row });
+      }
+    );
+  });
 });
 
-
 // Delete a card
-app.delete('/cards/:cardId', (req, res) => {
-    const { cardId } = req.params;
+app.delete("/cards/:cardId", (req, res) => {
+  const { cardId } = req.params;
 
-    db.run(`DELETE FROM customer_links WHERE id = ?`, [cardId], function (err) {
-        if (err) {
-            console.error("Fehler beim Löschen der Karte:", err.message);
-            return res.status(500).json({ success: false, message: "Fehler beim Löschen der Karte." });
-        }
-        res.status(200).json({ success: true, message: "Karte erfolgreich gelöscht." });
-    });
+  db.run(`DELETE FROM customer_links WHERE id = ?`, [cardId], function (err) {
+    if (err) {
+      console.error("Fehler beim Löschen der Karte:", err.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Fehler beim Löschen der Karte." });
+    }
+    res
+      .status(200)
+      .json({ success: true, message: "Karte erfolgreich gelöscht." });
+  });
 });
 
 app.use(express.static(path.join(__dirname, "src")));
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-    console.log("Upload gestartet...");
-  
-    const { cardId } = req.body;
-  
-    if (!req.file) {
-      console.error("Keine Datei hochgeladen.");
-      return res.status(400).json({ message: "Keine Datei hochgeladen." });
-    }
-  
-    if (!cardId) {
-      console.error("Fehlende cardId.");
-      return res.status(400).json({ message: "Fehlende cardId." });
-    }
-  
-    // Fetch card settings
-    const sql = "SELECT * FROM customer_links WHERE id = ?";
-    db.get(sql, [cardId], async (err, card) => {
-      if (err || !card) {
-        console.error("Fehler beim Abrufen der Karteneinstellungen:", err);
-        return res.status(500).json({ message: "Fehler beim Abrufen der Karteneinstellungen." });
-      }
-  
-      const maxFileSizeBytes = parseInt(card.max_file_size) * 1024 * 1024;
-      const compressionLevel = parseInt(card.compression_level) || 75;
-      const outputFormat = card.file_format.replace('.', '') || 'jpeg';
-      const expDate = new Date(card.expiration_date);
-      const today = new Date();
-  
-      if (today > expDate) {
-        console.error("Der Link ist abgelaufen.");
-        return res.status(400).json({ message: "Der Link ist abgelaufen." });
-      }
-  
-      if (req.file.size > maxFileSizeBytes) {
-        console.error("Datei überschreitet die maximale Größe.");
-        return res.status(400).json({ message: "Datei überschreitet die maximale Größe." });
-      }
-  
-      const inputFile = req.file.path;
-      const outputFileName = `${Date.now()}-${req.file.originalname.split(".")[0]}.${outputFormat}`;
-      const outputFilePath = path.resolve(compressedDir, outputFileName);
-  
-      console.log("Hochgeladene Datei:", inputFile);
-      console.log("Speicherort der komprimierten Datei:", outputFilePath);
-  
-      try {
-        // Get metadata for resizing
-        const metadata = await sharp(inputFile).metadata();
-        console.log("Bild-Metadaten:", metadata);
-  
-        // Example logic: Resize the image to 80% of original dimensions
-        const newWidth = Math.round(metadata.width * 0.8);
-        const newHeight = Math.round(metadata.height * 0.8);
-        console.log(`Neue Größe: ${newWidth}x${newHeight}`);
-  
-        // Resize, apply compression, and convert format
-        await sharp(inputFile)
-          .resize(newWidth, newHeight) // Resizing based on metadata
-          .toFormat(outputFormat, { quality: compressionLevel }) // Apply compression and format
-          .toFile(outputFilePath);
-  
-        console.log("✅ Bild gespeichert:", outputFilePath);
+  console.log("Upload gestartet...");
 
-        // Deduct 1 credit
-        db.run(`UPDATE customer_links SET credits = credits - 1 WHERE id = ?`, [cardId], (err) => {
-            if (err) {
-                console.error("Fehler beim Aktualisieren der Credits:", err.message);
-            } else {
-                console.log("1 Credit abgezogen.");
-            }
-        });
-  
-        // Save image path with cardId in the DB
-        db.run("INSERT INTO images (file_path, card_id) VALUES (?, ?)", [`/compressed/${outputFileName}`, cardId], (err) => {
+  const { cardId } = req.body;
+
+  if (!req.file) {
+    console.error("Keine Datei hochgeladen.");
+    return res.status(400).json({ message: "Keine Datei hochgeladen." });
+  }
+
+  if (!cardId) {
+    console.error("Fehlende cardId.");
+    return res.status(400).json({ message: "Fehlende cardId." });
+  }
+
+  // Fetch card settings
+  const sql = "SELECT * FROM customer_links WHERE id = ?";
+  db.get(sql, [cardId], async (err, card) => {
+    if (err || !card) {
+      console.error("Fehler beim Abrufen der Karteneinstellungen:", err);
+      return res
+        .status(500)
+        .json({ message: "Fehler beim Abrufen der Karteneinstellungen." });
+    }
+
+    const maxFileSizeBytes = parseInt(card.max_file_size) * 1024 * 1024;
+    const compressionLevel = parseInt(card.compression_level) || 75;
+    const outputFormat = card.file_format.replace(".", "") || "jpeg";
+    const expDate = new Date(card.expiration_date);
+    const today = new Date();
+
+    if (today > expDate) {
+      console.error("Der Link ist abgelaufen.");
+      return res.status(400).json({ message: "Der Link ist abgelaufen." });
+    }
+
+    if (req.file.size > maxFileSizeBytes) {
+      console.error("Datei überschreitet die maximale Größe.");
+      return res
+        .status(400)
+        .json({ message: "Datei überschreitet die maximale Größe." });
+    }
+
+    const inputFile = req.file.path;
+    const outputFileName = `${Date.now()}-${
+      req.file.originalname.split(".")[0]
+    }.${outputFormat}`;
+    const outputFilePath = path.resolve(compressedDir, outputFileName);
+
+    console.log("Hochgeladene Datei:", inputFile);
+    console.log("Speicherort der komprimierten Datei:", outputFilePath);
+
+    try {
+      // Get metadata for resizing
+      const metadata = await sharp(inputFile).metadata();
+      console.log("Bild-Metadaten:", metadata);
+
+      // Example logic: Resize the image to 80% of original dimensions
+      const newWidth = Math.round(metadata.width * 0.8);
+      const newHeight = Math.round(metadata.height * 0.8);
+      console.log(`Neue Größe: ${newWidth}x${newHeight}`);
+
+      // Resize, apply compression, and convert format
+      await sharp(inputFile)
+        .resize(newWidth, newHeight)
+        .toFormat(outputFormat, { quality: compressionLevel })
+        .toFile(outputFilePath);
+
+      console.log("✅ Bild gespeichert:", outputFilePath);
+      console.log(
+        "🔍 Existiert die Datei?",
+        fs.existsSync(outputFilePath) ? "Ja" : "Nein"
+      );
+      // Deduct 1 credit
+      db.run(
+        `UPDATE customer_links SET credits = credits - 1 WHERE id = ?`,
+        [cardId],
+        (err) => {
           if (err) {
-            console.error("❌ Fehler beim Speichern des Bildes in der DB:", err.message);
-            return res.status(500).json({ message: "Fehler beim Speichern des Bildes." });
+            console.error(
+              "Fehler beim Aktualisieren der Credits:",
+              err.message
+            );
+          } else {
+            console.log("1 Credit abgezogen.");
           }
-  
+        }
+      );
+
+      // Save image path with cardId in the DB
+      db.run(
+        "INSERT INTO images (file_path, card_id) VALUES (?, ?)",
+        [`/compressed/${outputFileName}`, cardId],
+        (err) => {
+          if (err) {
+            console.error(
+              "❌ Fehler beim Speichern des Bildes in der DB:",
+              err.message
+            );
+            return res
+              .status(500)
+              .json({ message: "Fehler beim Speichern des Bildes." });
+          }
+
           // Verify file exists after saving
           if (fs.existsSync(outputFilePath)) {
             console.log("✅ Datei erfolgreich gespeichert:", outputFilePath);
           } else {
-            console.error("❌ Datei wurde nicht gefunden nach Speicherung:", outputFilePath);
+            console.error(
+              "❌ Datei wurde nicht gefunden nach Speicherung:",
+              outputFilePath
+            );
           }
-  
+
           // Respond with success and file details
           res.status(200).json({
             message: "Datei erfolgreich hochgeladen und komprimiert.",
@@ -420,24 +543,25 @@ app.post("/upload", upload.single("file"), async (req, res) => {
               name: outputFileName,
               path: `/compressed/${outputFileName}`,
               size: fs.statSync(outputFilePath).size,
-            }
+            },
           });
-        });
-      } catch (error) {
-        console.error("Fehler bei der Bildverarbeitung:", error);
-        res.status(500).json({ message: "Fehler bei der Komprimierung." });
-      }
-    });
+        }
+      );
+    } catch (error) {
+      console.error("Fehler bei der Bildverarbeitung:", error);
+      res.status(500).json({ message: "Fehler bei der Komprimierung." });
+    }
   });
-   
-
+});
 
 app.delete("/delete", express.json(), (req, res) => {
   console.log("🚨 DELETE-Anfrage erhalten:", req.body);
 
   if (!req.body || !req.body.filename) {
     console.error("❌ req.body ist undefined oder 'filename' fehlt!", req.body);
-    return res.status(400).json({ message: "Fehlender Dateiname in der Anfrage." });
+    return res
+      .status(400)
+      .json({ message: "Fehlender Dateiname in der Anfrage." });
   }
 
   const { filename } = req.body;
@@ -449,7 +573,12 @@ app.delete("/delete", express.json(), (req, res) => {
   fs.unlink(filePath, (err) => {
     if (err) {
       console.error("❌ Fehler beim Löschen der Datei:", err);
-      return res.status(500).json({ message: "Fehler beim Löschen der Datei.", error: err.message });
+      return res
+        .status(500)
+        .json({
+          message: "Fehler beim Löschen der Datei.",
+          error: err.message,
+        });
     }
 
     console.log("✅ Datei erfolgreich gelöscht:", filename);
@@ -461,116 +590,133 @@ app.delete("/delete", express.json(), (req, res) => {
   });
 });
 
-
 app.get("/images/:cardId", (req, res) => {
-    const { cardId } = req.params;
-  
-    const sql = "SELECT * FROM images WHERE card_id = ?";
-    db.all(sql, [cardId], (err, rows) => {
-      if (err) {
-        return res.status(500).json({ message: "Fehler beim Abrufen der Bilder." });
-      }
-      res.json(rows);
-    });
+  const { cardId } = req.params;
+
+  const sql = "SELECT * FROM images WHERE card_id = ?";
+  db.all(sql, [cardId], (err, rows) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: "Fehler beim Abrufen der Bilder." });
+    }
+    res.json(rows);
   });
+});
 
-  app.get("/images", (req, res) => {
-    getImages((images) => {
-      res.json(images);
-    });
+app.get("/images", (req, res) => {
+  getImages((images) => {
+    res.json(images);
   });
+});
 
-  // Fetch specific card by cardId
-app.get('/cards/:cardId', (req, res) => {
-    const { cardId } = req.params;
+// Fetch specific card by cardId
+app.get("/cards/:cardId", (req, res) => {
+  const { cardId } = req.params;
+  console.log("🔍 cardId aus der Anfrage:", cardId);
 
-    const query = `SELECT * FROM customer_links WHERE id = ?`;
-    db.get(query, [cardId], (err, row) => {
-        if (err) {
-            console.error("Fehler beim Abrufen der Karte:", err.message);
-            return res.status(500).json({ success: false, message: "Fehler beim Abrufen der Karte." });
-        }
-        if (!row) {
-            return res.status(404).json({ success: false, message: "Karte nicht gefunden." });
-        }
-        res.status(200).json({ success: true, card: row });
-    });
+  const query = `SELECT * FROM customer_links WHERE id = ?`;
+  db.get(query, [cardId], (err, row) => {
+    if (err) {
+      console.error("Fehler beim Abrufen der Karte:", err.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Fehler beim Abrufen der Karte." });
+    }
+    if (!row) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Karte nicht gefunden." });
+    }
+    res.status(200).json({ success: true, card: row });
+  });
 });
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
+app.get("/download-all/:cardId", (req, res) => {
+  const { cardId } = req.params;
+  const zipFileName = `compressed_files_${cardId}.zip`;
 
-app.get('/download-all/:cardId', (req, res) => {
-    const { cardId } = req.params;
-    const zipFileName = `compressed_files_${cardId}.zip`;
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename=${zipFileName}`);
 
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename=${zipFileName}`);
+  const archive = archiver("zip", { zlib: { level: 9 } });
 
-    const archive = archiver('zip', { zlib: { level: 9 } });
+  archive.pipe(res);
 
-    archive.pipe(res);
+  db.all(
+    "SELECT file_path FROM images WHERE card_id = ?",
+    [cardId],
+    (err, rows) => {
+      if (err) {
+        console.error("Fehler beim Abrufen der Bilder:", err.message);
+        return res
+          .status(500)
+          .json({ message: "Fehler beim Abrufen der Bilder." });
+      }
 
-    db.all("SELECT file_path FROM images WHERE card_id = ?", [cardId], (err, rows) => {
-        if (err) {
-            console.error("Fehler beim Abrufen der Bilder:", err.message);
-            return res.status(500).json({ message: "Fehler beim Abrufen der Bilder." });
-        }
+      if (rows.length === 0) {
+        return res.status(404).json({ message: "Keine Bilder gefunden." });
+      }
 
-        if (rows.length === 0) {
-            return res.status(404).json({ message: "Keine Bilder gefunden." });
-        }
+      rows.forEach((row) => {
+        const filePath = path.join(__dirname, "..", row.file_path);
+        archive.file(filePath, { name: path.basename(filePath) });
+      });
 
-        rows.forEach((row) => {
-            const filePath = path.join(__dirname, "..", row.file_path);
-            archive.file(filePath, { name: path.basename(filePath) });
-        });
-
-        archive.finalize();
-    });
+      archive.finalize();
+    }
+  );
 });
-
 
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "✔️ Vorhanden" : "❌ Fehlt");
+console.log(
+  "EMAIL_PASS:",
+  process.env.EMAIL_PASS ? "✔️ Vorhanden" : "❌ Fehlt"
+);
 
-app.post('/send-email', async (req, res) => {
-    const { email, cardId } = req.body;
+app.post("/send-email", async (req, res) => {
+  const { email, cardId } = req.body;
 
-    if (!email || !cardId) {
-        return res.status(400).json({ message: 'Bitte geben Sie eine gültige E-Mail-Adresse und eine Karten-ID an.' });
-    }
+  if (!email || !cardId) {
+    return res
+      .status(400)
+      .json({
+        message:
+          "Bitte geben Sie eine gültige E-Mail-Adresse und eine Karten-ID an.",
+      });
+  }
 
-    const downloadLink = `http://localhost:3000/download-all/${cardId}`;
+  const downloadLink = `http://localhost:3000/download-all/${cardId}`;
 
-    try {
-        const info = await transporter.sendMail({
-            from: `"Shrinkify" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Download-Link für Ihre Dateien',
-            html: `<p>Hallo,</p>
+  try {
+    const info = await transporter.sendMail({
+      from: `"Shrinkify" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Download-Link für Ihre Dateien",
+      html: `<p>Hallo,</p>
                    <p>Hier ist Ihr angefragter <b>Download-Link</b>.</p>
                    <p><a href="${downloadLink}" target="_blank">Hier klicken, um alle Dateien herunterzuladen</a></p>
                    <p>Viel Spaß wünscht Ihnen das Shrinkify Team!</p>`,
-        });
+    });
 
-        res.status(200).json({ message: 'E-Mail erfolgreich gesendet.', info });
-    } catch (error) {
-        console.error('Fehler beim Senden der E-Mail:', error);
-        res.status(500).json({ message: 'Fehler beim Senden der E-Mail.', error });
-    }
+    res.status(200).json({ message: "E-Mail erfolgreich gesendet.", info });
+  } catch (error) {
+    console.error("Fehler beim Senden der E-Mail:", error);
+    res.status(500).json({ message: "Fehler beim Senden der E-Mail.", error });
+  }
 });
-
 
 // Server starten
 app.listen(port, () => {
-    console.log(`Server läuft unter http://localhost:${port}`);
+  console.log(`Server läuft unter http://localhost:${port}`);
 });
