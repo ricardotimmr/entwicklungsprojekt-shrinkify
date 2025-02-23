@@ -2,11 +2,6 @@ main {
     margin-left: var(--xxxl);
 }
 
-header {
-    padding-right: 80px;
-    padding-left: 80px;
-}
-
 .contentmanager-options {
     margin-right: 385px;
     margin-bottom: 500px;

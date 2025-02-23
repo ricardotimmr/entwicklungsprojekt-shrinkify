@@ -24,7 +24,7 @@ header {
   align-items: center;
   background-color: var(--color-purple-dark);
   margin: 0;
-  padding: var(--l) var(--xxl);
+  padding: var(--l) var(--xxxl);
 
   ul {
     display: flex;
