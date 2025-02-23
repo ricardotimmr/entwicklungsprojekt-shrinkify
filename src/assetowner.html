@@ -80,10 +80,22 @@
             <!-- Hier werden die Dateien dynamisch hinzugefügt -->
           </ul>        
           <button class="download-all">aktuelle herunterladen</button>
-          <form id="emailForm">
-            <input type="email" id="emailInput" name="email" placeholder="shrinkify.ep@gmail.com" required />
-            <button type="submit">E-Mail senden</button>
-          </form>
+          <!-- E-Mail Button -->
+          <button id="openEmailModal" class="email-button">E-Mail senden</button>
+
+          <!-- E-Mail Modal -->
+          <div id="emailModal" class="modal hidden">
+            <div class="modal-content">
+              <span id="closeEmailModal" class="close">&times;</span>
+              <h3>Download-Link per E-Mail senden</h3>
+              <form id="emailForm">
+                <input type="email" id="emailInput" name="email" placeholder="E-Mail eingeben" required />
+                <button type="submit" class="send-email">Senden</button>
+              </form>
+            </div>
+          </div>
+        <div id="modalBackdrop" class="hidden"></div>
+  
           <h4>Frühere Uploads</h4>
           <ul class="file-list" id="file-list-old">
             <!-- Hier werden die Dateien dynamisch hinzugefügt -->
